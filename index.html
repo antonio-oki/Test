@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LO's Sideload Portal</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #0f0f0f; color: #e0e0e0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: #1a1a1a; padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; border: 1px solid #333; }
+        h1 { margin-bottom: 10px; color: #fff; }
+        .install-btn { display: inline-block; padding: 16px 32px; background: #007aff; color: white; text-decoration: none; border-radius: 14px; font-weight: 600; font-size: 18px; transition: transform 0.2s, background 0.2s; }
+        .install-btn:active { transform: scale(0.95); background: #005ecb; }
+        p { color: #777; margin-top: 20px; max-width: 300px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>App Portal</h1>
+        <p>Ready to sideload the payload?</p>
+        <a class="install-btn" href="itms-services://?action=download-manifest&url=https://yourdomain.com/manifest.plist">
+            Install IPA
+        </a>
+        <p style="font-size: 12px;">Note: You must trust the developer certificate in Settings > General > VPN & Device Management after install.</p>
+    </div>
+</body>
+</html>
