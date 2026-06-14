@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Macintosh System 1</title>
-
 <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <select id="resolutionSelect">
@@ -25,44 +25,49 @@
 
     <div id="desktop">
 
-        <div class="icon">
-            💾
-            <span>Macintosh HD</span>
-        </div>
-
-        <div class="icon">
+        <div class="icon" data-app="write">
             📄
             <span>Write</span>
         </div>
 
-        <div class="icon">
+        <div class="icon" data-app="calc">
             🧮
             <span>Calculator</span>
         </div>
 
-        <div id="writeWindow" class="window">
+        <div class="icon" data-app="folder">
+            📁
+            <span>Files</span>
+        </div>
 
-            <div class="titlebar">
-                Untitled
-            </div>
+        <!-- WINDOWS -->
 
+        <div class="window" id="writeWindow">
+            <div class="titlebar">Write</div>
             <div class="content">
-                <h3>Welcome to Macintosh</h3>
-
-                <textarea>
-Type here...
-                </textarea>
+                <textarea>Welcome to Macintosh</textarea>
             </div>
+        </div>
 
+        <div class="window" id="calcWindow">
+            <div class="titlebar">Calculator</div>
+            <div class="content">
+                <input id="calcInput" placeholder="Type math...">
+                <div id="calcOut"></div>
+            </div>
+        </div>
+
+        <!-- TRASH -->
+        <div id="trash">
+            🗑️
+            <span>Trash</span>
         </div>
 
     </div>
-
 </div>
 
 <div id="cursor"></div>
 
 <script src="script.js"></script>
-
 </body>
 </html>
