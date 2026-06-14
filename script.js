@@ -1,5 +1,8 @@
-const screen = document.getElementById("screen");
+const boot = document.getElementById("boot");
+const system = document.getElementById("system");
+
 const cursor = document.getElementById("cursor");
+const screen = document.getElementById("screen");
 
 const writeWindow = document.getElementById("writeWindow");
 const calcWindow = document.getElementById("calcWindow");
@@ -8,183 +11,133 @@ const icons = document.querySelectorAll(".icon");
 const trash = document.getElementById("trash");
 const resolution = document.getElementById("resolutionSelect");
 
-let cursorX = window.innerWidth / 2;
-let cursorY = window.innerHeight / 2;
+let x = 100;
+let y = 100;
 
-let draggingWin = null;
+let dragging = null;
 let offsetX = 0;
 let offsetY = 0;
 
-let zIndex = 10;
+let z = 10;
 
-let lastTapTime = 0;
+/* ================= BOOT SEQUENCE ================= */
 
-/* =========================
-   CURSOR SYSTEM
-========================= */
+window.addEventListener("load", () => {
 
-function updateCursor() {
-    cursor.style.left = cursorX + "px";
-    cursor.style.top = cursorY + "px";
+    setTimeout(() => {
+        document.getElementById("bootText").innerText =
+            "Welcome to Macintosh";
+    }, 1200);
+
+    setTimeout(() => {
+        boot.style.opacity = "0";
+        boot.style.transition = "1s";
+
+        system.style.opacity = "1";
+    }, 2500);
+
+    setTimeout(() => {
+        boot.style.display = "none";
+    }, 3500);
+});
+
+/* ================= CURSOR ================= */
+
+function drawCursor() {
+    cursor.style.left = x + "px";
+    cursor.style.top = y + "px";
 }
-
-updateCursor();
-
-/* =========================
-   POINTER INPUT (MOUSE + TOUCH UNIFIED)
-========================= */
-
-function getPoint(e) {
-    if (e.touches && e.touches.length > 0) {
-        return e.touches[0];
-    }
-    return e;
-}
-
-/* MOVE POINTER */
-function movePointer(x, y) {
-    cursorX = x;
-    cursorY = y;
-    updateCursor();
-
-    if (draggingWin) {
-        draggingWin.style.left = (cursorX - offsetX) + "px";
-        draggingWin.style.top = (cursorY - offsetY) + "px";
-    }
-}
-
-/* =========================
-   GLOBAL MOVE EVENTS
-========================= */
 
 document.addEventListener("mousemove", (e) => {
-    movePointer(e.clientX, e.clientY);
+    x = e.clientX;
+    y = e.clientY;
+    drawCursor();
+
+    if (dragging) move();
 });
 
 document.addEventListener("touchmove", (e) => {
-    const p = getPoint(e);
-    movePointer(p.clientX, p.clientY);
+    const t = e.touches[0];
+    x = t.clientX;
+    y = t.clientY;
+    drawCursor();
+
+    if (dragging) move();
+
     e.preventDefault();
 }, { passive: false });
 
-/* =========================
-   DRAG SYSTEM
-========================= */
+/* ================= WINDOW SYSTEM ================= */
 
 function focus(win) {
-    zIndex++;
-    win.style.zIndex = zIndex;
+    z++;
+    win.style.zIndex = z;
 }
 
-function startDrag(win, x, y) {
-    draggingWin = win;
-
-    focus(win);
-
-    offsetX = x - win.offsetLeft;
-    offsetY = y - win.offsetTop;
-}
-
-function stopDrag() {
-    draggingWin = null;
-}
-
-/* =========================
-   WINDOW DRAG (WRITE)
-========================= */
-
-writeWindow.querySelector(".titlebar")
-.addEventListener("mousedown", (e) => {
-    startDrag(writeWindow, e.clientX, e.clientY);
-});
-
-writeWindow.querySelector(".titlebar")
-.addEventListener("touchstart", (e) => {
-    const p = getPoint(e);
-    startDrag(writeWindow, p.clientX, p.clientY);
-});
-
-/* =========================
-   WINDOW DRAG (CALC)
-========================= */
-
-calcWindow.querySelector(".titlebar")
-.addEventListener("mousedown", (e) => {
-    startDrag(calcWindow, e.clientX, e.clientY);
-});
-
-calcWindow.querySelector(".titlebar")
-.addEventListener("touchstart", (e) => {
-    const p = getPoint(e);
-    startDrag(calcWindow, p.clientX, p.clientY);
-});
-
-/* STOP DRAG */
-document.addEventListener("mouseup", stopDrag);
-document.addEventListener("touchend", stopDrag);
-
-/* =========================
-   ICON SYSTEM (TOUCH + MOUSE)
-========================= */
-
-icons.forEach(icon => {
-
-    icon.addEventListener("mousedown", () => {
-        handleOpen(icon);
-    });
-
-    icon.addEventListener("touchstart", (e) => {
-        e.preventDefault();
-
-        const now = Date.now();
-
-        // double tap detection
-        if (now - lastTapTime < 350) {
-            handleOpen(icon);
-        }
-
-        lastTapTime = now;
-    }, { passive: false });
-
-});
-
-function handleOpen(icon) {
-    const app = icon.dataset.app;
-
-    if (app === "write") openWindow(writeWindow);
-    if (app === "calc") openWindow(calcWindow);
-}
-
-/* =========================
-   OPEN WINDOW
-========================= */
-
-function openWindow(win) {
+function open(win) {
     win.style.display = "block";
     focus(win);
 }
 
-/* =========================
-   TRASH
-========================= */
+/* ================= DRAG ================= */
 
+function start(win, px, py) {
+    dragging = win;
+    focus(win);
+
+    offsetX = px - win.offsetLeft;
+    offsetY = py - win.offsetTop;
+}
+
+function move() {
+    if (!dragging) return;
+
+    dragging.style.left = (x - offsetX) + "px";
+    dragging.style.top = (y - offsetY) + "px";
+}
+
+function stop() {
+    dragging = null;
+}
+
+/* WRITE WINDOW */
+writeWindow.querySelector(".titlebar")
+.addEventListener("mousedown", (e) => {
+    start(writeWindow, e.clientX, e.clientY);
+});
+
+writeWindow.querySelector(".titlebar")
+.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    start(writeWindow, t.clientX, t.clientY);
+});
+
+/* CALC WINDOW */
+calcWindow.querySelector(".titlebar")
+.addEventListener("mousedown", (e) => {
+    start(calcWindow, e.clientX, e.clientY);
+});
+
+document.addEventListener("mouseup", stop);
+document.addEventListener("touchend", stop);
+
+/* ICONS */
+icons.forEach(icon => {
+    icon.addEventListener("dblclick", () => {
+        if (icon.dataset.app === "write") open(writeWindow);
+        if (icon.dataset.app === "calc") open(calcWindow);
+    });
+});
+
+/* TRASH */
 trash.addEventListener("click", () => {
     writeWindow.style.display = "none";
     calcWindow.style.display = "none";
 });
 
-trash.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    writeWindow.style.display = "none";
-    calcWindow.style.display = "none";
-}, { passive: false });
-
-/* =========================
-   CALCULATOR
-========================= */
-
+/* CALC */
 document.getElementById("calcInput")
-.addEventListener("input", (e) => {
+.addEventListener("input", e => {
     try {
         document.getElementById("calcOut").innerText =
             eval(e.target.value);
@@ -193,10 +146,7 @@ document.getElementById("calcInput")
     }
 });
 
-/* =========================
-   RESOLUTION SYSTEM
-========================= */
-
+/* RESOLUTION */
 resolution.addEventListener("change", () => {
     const v = resolution.value;
 
@@ -210,26 +160,4 @@ resolution.addEventListener("change", () => {
 
     screen.style.width = w + "px";
     screen.style.height = h + "px";
-});
-
-/* =========================
-   TOUCH SCROLL LOCK (IMPORTANT)
-========================= */
-
-document.addEventListener("touchmove", (e) => {
-    e.preventDefault();
-}, { passive: false });
-
-/* =========================
-   STARTUP
-========================= */
-
-window.addEventListener("load", () => {
-    console.log("Macintosh System 1 Touch OS Ready");
-
-    writeWindow.style.left = "80px";
-    writeWindow.style.top = "60px";
-
-    calcWindow.style.left = "140px";
-    calcWindow.style.top = "100px";
 });
