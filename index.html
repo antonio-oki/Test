@@ -9,11 +9,18 @@
 
 <body>
 
+<!-- BOOT SCREEN -->
+<div id="boot">
+    <div id="bootText">Starting Macintosh...</div>
+</div>
+
+<!-- MAIN SYSTEM -->
+<div id="system">
+
 <select id="resolutionSelect">
     <option value="512x342">512×342</option>
     <option value="640x480">640×480</option>
     <option value="800x600">800×600</option>
-    <option value="1024x768">1024×768</option>
     <option value="fullscreen">Fullscreen</option>
 </select>
 
@@ -35,38 +42,29 @@
             <span>Calculator</span>
         </div>
 
-        <div class="icon" data-app="folder">
-            📁
-            <span>Files</span>
-        </div>
+        <div id="trash">🗑️ Trash</div>
 
-        <!-- WINDOWS -->
-
-        <div class="window" id="writeWindow">
+        <div id="writeWindow" class="window">
             <div class="titlebar">Write</div>
             <div class="content">
-                <textarea>Welcome to Macintosh</textarea>
+                <textarea>Welcome</textarea>
             </div>
         </div>
 
-        <div class="window" id="calcWindow">
+        <div id="calcWindow" class="window">
             <div class="titlebar">Calculator</div>
             <div class="content">
-                <input id="calcInput" placeholder="Type math...">
+                <input id="calcInput">
                 <div id="calcOut"></div>
             </div>
-        </div>
-
-        <!-- TRASH -->
-        <div id="trash">
-            🗑️
-            <span>Trash</span>
         </div>
 
     </div>
 </div>
 
 <div id="cursor"></div>
+
+</div>
 
 <script src="script.js"></script>
 </body>
