@@ -1,0 +1,73 @@
+body {
+    margin: 0;
+    background: white;
+    color: black;
+    overflow: hidden;
+
+    font-family:
+        "Chicago",
+        "Geneva",
+        monospace;
+}
+
+#menubar {
+    height: 22px;
+    background: white;
+    border-bottom: 2px solid black;
+
+    padding-left: 10px;
+    line-height: 22px;
+    font-weight: bold;
+}
+
+.apple {
+    margin-right: 10px;
+}
+
+#desktop {
+    width: 100vw;
+    height: calc(100vh - 22px);
+    background: white;
+}
+
+.icon {
+    width: 80px;
+    text-align: center;
+    margin: 20px;
+    cursor: pointer;
+}
+
+.window {
+    position: absolute;
+    top: 100px;
+    left: 150px;
+
+    width: 400px;
+    background: white;
+
+    border: 2px solid black;
+}
+
+.titlebar {
+    text-align: center;
+
+    padding: 4px;
+
+    border-bottom: 2px solid black;
+
+    font-weight: bold;
+
+    background:
+        repeating-linear-gradient(
+            to right,
+            black 0px,
+            black 2px,
+            white 2px,
+            white 4px
+        );
+}
+
+.content {
+    padding: 10px;
+    min-height: 200px;
+}
