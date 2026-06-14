@@ -1,230 +1,149 @@
-const cursor = document.getElementById("cursor");
 const screen = document.getElementById("screen");
-const resolutionSelect =
-document.getElementById("resolutionSelect");
+const cursor = document.getElementById("cursor");
 
-const writeWindow =
-document.getElementById("writeWindow");
+const writeWindow = document.getElementById("writeWindow");
+const calcWindow = document.getElementById("calcWindow");
 
-const titleBar =
-document.querySelector(".titlebar");
+const icons = document.querySelectorAll(".icon");
+const trash = document.getElementById("trash");
+const resolution = document.getElementById("resolutionSelect");
 
-const icons =
-document.querySelectorAll(".icon");
+let cursorX = 100;
+let cursorY = 100;
 
-let highestZ = 10;
-
-let cursorX = window.innerWidth / 2;
-let cursorY = window.innerHeight / 2;
-
-let dragging = false;
-
+let dragging = null;
 let offsetX = 0;
 let offsetY = 0;
 
-function updateCursor() {
+let z = 10;
 
-    cursor.style.left =
-        cursorX + "px";
-
-    cursor.style.top =
-        cursorY + "px";
+/* CURSOR */
+function drawCursor() {
+    cursor.style.left = cursorX + "px";
+    cursor.style.top = cursorY + "px";
 }
 
-updateCursor();
+drawCursor();
 
-document.addEventListener(
-    "mousemove",
-    (e) => {
+/* MOVE CURSOR */
+document.addEventListener("mousemove", (e) => {
+    cursorX = e.clientX;
+    cursorY = e.clientY;
+    drawCursor();
 
-        cursorX = e.clientX;
-        cursorY = e.clientY;
-
-        updateCursor();
-
-        if (dragging) {
-
-            writeWindow.style.left =
-                (cursorX - offsetX) + "px";
-
-            writeWindow.style.top =
-                (cursorY - offsetY) + "px";
-        }
-    }
-);
-
-document.addEventListener(
-    "touchmove",
-    (e) => {
-
-        const touch =
-            e.touches[0];
-
-        cursorX =
-            touch.clientX;
-
-        cursorY =
-            touch.clientY;
-
-        updateCursor();
-
-        if (dragging) {
-
-            writeWindow.style.left =
-                (cursorX - offsetX) + "px";
-
-            writeWindow.style.top =
-                (cursorY - offsetY) + "px";
-        }
-
-        e.preventDefault();
-    },
-    { passive:false }
-);
-
-function focusWindow(win) {
-
-    highestZ++;
-
-    win.style.zIndex =
-        highestZ;
-}
-
-titleBar.addEventListener(
-    "mousedown",
-    (e) => {
-
-        dragging = true;
-
-        focusWindow(writeWindow);
-
-        offsetX =
-            e.clientX -
-            writeWindow.offsetLeft;
-
-        offsetY =
-            e.clientY -
-            writeWindow.offsetTop;
-    }
-);
-
-titleBar.addEventListener(
-    "touchstart",
-    (e) => {
-
-        const touch =
-            e.touches[0];
-
-        dragging = true;
-
-        focusWindow(writeWindow);
-
-        offsetX =
-            touch.clientX -
-            writeWindow.offsetLeft;
-
-        offsetY =
-            touch.clientY -
-            writeWindow.offsetTop;
-    }
-);
-
-document.addEventListener(
-    "mouseup",
-    () => {
-
-        dragging = false;
-    }
-);
-
-document.addEventListener(
-    "touchend",
-    () => {
-
-        dragging = false;
-    }
-);
-
-function openWriteWindow() {
-
-    writeWindow.style.display =
-        "block";
-
-    focusWindow(writeWindow);
-}
-
-icons.forEach((icon) => {
-
-    let lastTap = 0;
-
-    icon.addEventListener(
-        "dblclick",
-        openWriteWindow
-    );
-
-    icon.addEventListener(
-        "touchstart",
-        () => {
-
-            const now =
-                Date.now();
-
-            if (
-                now - lastTap <
-                400
-            ) {
-                openWriteWindow();
-            }
-
-            lastTap = now;
-        }
-    );
+    if (dragging) moveWindow();
 });
 
-resolutionSelect.addEventListener(
-    "change",
-    () => {
+document.addEventListener("touchmove", (e) => {
+    const t = e.touches[0];
+    cursorX = t.clientX;
+    cursorY = t.clientY;
+    drawCursor();
 
-        const value =
-            resolutionSelect.value;
+    if (dragging) moveWindow();
+    e.preventDefault();
+}, { passive: false });
 
-        if (
-            value ===
-            "fullscreen"
-        ) {
+/* WINDOW SYSTEM */
+function focus(win) {
+    z++;
+    win.style.zIndex = z;
+}
 
-            screen.style.width =
-                "100vw";
+function open(win) {
+    win.style.display = "block";
+    focus(win);
+}
 
-            screen.style.height =
-                "100vh";
+/* DRAGGING */
+function startDrag(win, x, y) {
+    dragging = win;
+    focus(win);
 
-            return;
-        }
+    offsetX = x - win.offsetLeft;
+    offsetY = y - win.offsetTop;
+}
 
-        const parts =
-            value.split("x");
+function moveWindow() {
+    if (!dragging) return;
 
-        screen.style.width =
-            parts[0] + "px";
+    dragging.style.left = (cursorX - offsetX) + "px";
+    dragging.style.top = (cursorY - offsetY) + "px";
+}
 
-        screen.style.height =
-            parts[1] + "px";
+function stopDrag() {
+    dragging = null;
+}
+
+/* WRITE WINDOW */
+writeWindow.querySelector(".titlebar")
+.addEventListener("mousedown", (e) => {
+    startDrag(writeWindow, e.clientX, e.clientY);
+});
+
+writeWindow.querySelector(".titlebar")
+.addEventListener("touchstart", (e) => {
+    const t = e.touches[0];
+    startDrag(writeWindow, t.clientX, t.clientY);
+});
+
+/* CALC WINDOW */
+calcWindow.querySelector(".titlebar")
+.addEventListener("mousedown", (e) => {
+    startDrag(calcWindow, e.clientX, e.clientY);
+});
+
+/* STOP DRAG */
+document.addEventListener("mouseup", stopDrag);
+document.addEventListener("touchend", stopDrag);
+
+/* ICONS */
+icons.forEach(icon => {
+    icon.addEventListener("dblclick", () => {
+        if (icon.dataset.app === "write") open(writeWindow);
+        if (icon.dataset.app === "calc") open(calcWindow);
+    });
+});
+
+/* TRASH */
+trash.addEventListener("click", () => {
+    writeWindow.style.display = "none";
+    calcWindow.style.display = "none";
+});
+
+/* CALCULATOR */
+document.getElementById("calcInput")
+.addEventListener("input", (e) => {
+    try {
+        document.getElementById("calcOut").innerText =
+            eval(e.target.value);
+    } catch {
+        document.getElementById("calcOut").innerText = "";
     }
-);
+});
 
-window.addEventListener(
-    "load",
-    () => {
+/* RESOLUTION */
+resolution.addEventListener("change", () => {
+    const v = resolution.value;
 
-        writeWindow.style.left =
-            "100px";
-
-        writeWindow.style.top =
-            "60px";
-
-        console.log(
-            "Welcome to Macintosh"
-        );
+    if (v === "fullscreen") {
+        screen.style.width = "100vw";
+        screen.style.height = "100vh";
+        return;
     }
-);
+
+    const [w, h] = v.split("x");
+    screen.style.width = w + "px";
+    screen.style.height = h + "px";
+});
+
+/* STARTUP */
+window.onload = () => {
+    console.log("Macintosh System 1 Loaded");
+
+    writeWindow.style.left = "80px";
+    writeWindow.style.top = "60px";
+
+    calcWindow.style.left = "120px";
+    calcWindow.style.top = "100px";
+};
