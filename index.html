@@ -1,15 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Macintosh System 1</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macintosh System 1</title>
+
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<!-- MENU BAR -->
+
 <div id="menubar">
     <span class="apple"></span>
-    File Edit View Special
+    File&nbsp;&nbsp;Edit&nbsp;&nbsp;View&nbsp;&nbsp;Special
 </div>
+
+<!-- DESKTOP -->
 
 <div id="desktop">
 
@@ -23,17 +30,140 @@
         <div>Write</div>
     </div>
 
+    <div class="icon">
+        🧮
+        <div>Calculator</div>
+    </div>
+
 </div>
 
-<div class="window" id="writeWindow">
+<!-- WRITE WINDOW -->
+
+<div id="writeWindow" class="window">
+
     <div class="titlebar">
         Untitled
     </div>
 
     <div class="content">
-        Welcome to Macintosh.
+
+        <h3>Welcome to Macintosh</h3>
+
+        <p>
+            This is a web recreation of
+            Macintosh System 1.
+        </p>
+
+        <textarea
+            style="
+                width:100%;
+                height:150px;
+                resize:none;
+            "
+        >
+Type here...
+        </textarea>
+
     </div>
+
 </div>
+
+<!-- TOUCH/MOUSE CURSOR -->
+
+<div id="cursor"></div>
+
+<!-- BOOT SOUND (OPTIONAL) -->
+
+<audio id="bootSound">
+    <source src="" type="audio/mpeg">
+</audio>
+
+<!-- SCRIPT -->
+
+<script src="script.js"></script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macintosh System 1</title>
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- MENU BAR -->
+
+<div id="menubar">
+    <span class="apple"></span>
+    File&nbsp;&nbsp;Edit&nbsp;&nbsp;View&nbsp;&nbsp;Special
+</div>
+
+<!-- DESKTOP -->
+
+<div id="desktop">
+
+    <div class="icon">
+        💾
+        <div>Macintosh HD</div>
+    </div>
+
+    <div class="icon">
+        📄
+        <div>Write</div>
+    </div>
+
+    <div class="icon">
+        🧮
+        <div>Calculator</div>
+    </div>
+
+</div>
+
+<!-- WRITE WINDOW -->
+
+<div id="writeWindow" class="window">
+
+    <div class="titlebar">
+        Untitled
+    </div>
+
+    <div class="content">
+
+        <h3>Welcome to Macintosh</h3>
+
+        <p>
+            This is a web recreation of
+            Macintosh System 1.
+        </p>
+
+        <textarea
+            style="
+                width:100%;
+                height:150px;
+                resize:none;
+            "
+        >
+Type here...
+        </textarea>
+
+    </div>
+
+</div>
+
+<!-- TOUCH/MOUSE CURSOR -->
+
+<div id="cursor"></div>
+
+<!-- BOOT SOUND (OPTIONAL) -->
+
+<audio id="bootSound">
+    <source src="" type="audio/mpeg">
+</audio>
+
+<!-- SCRIPT -->
 
 <script src="script.js"></script>
 
