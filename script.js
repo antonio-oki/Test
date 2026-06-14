@@ -8,74 +8,91 @@ const icons = document.querySelectorAll(".icon");
 const trash = document.getElementById("trash");
 const resolution = document.getElementById("resolutionSelect");
 
-let cursorX = 100;
-let cursorY = 100;
+let cursorX = window.innerWidth / 2;
+let cursorY = window.innerHeight / 2;
 
-let dragging = null;
+let draggingWin = null;
 let offsetX = 0;
 let offsetY = 0;
 
-let z = 10;
+let zIndex = 10;
 
-/* CURSOR */
-function drawCursor() {
+let lastTapTime = 0;
+
+/* =========================
+   CURSOR SYSTEM
+========================= */
+
+function updateCursor() {
     cursor.style.left = cursorX + "px";
     cursor.style.top = cursorY + "px";
 }
 
-drawCursor();
+updateCursor();
 
-/* MOVE CURSOR */
+/* =========================
+   POINTER INPUT (MOUSE + TOUCH UNIFIED)
+========================= */
+
+function getPoint(e) {
+    if (e.touches && e.touches.length > 0) {
+        return e.touches[0];
+    }
+    return e;
+}
+
+/* MOVE POINTER */
+function movePointer(x, y) {
+    cursorX = x;
+    cursorY = y;
+    updateCursor();
+
+    if (draggingWin) {
+        draggingWin.style.left = (cursorX - offsetX) + "px";
+        draggingWin.style.top = (cursorY - offsetY) + "px";
+    }
+}
+
+/* =========================
+   GLOBAL MOVE EVENTS
+========================= */
+
 document.addEventListener("mousemove", (e) => {
-    cursorX = e.clientX;
-    cursorY = e.clientY;
-    drawCursor();
-
-    if (dragging) moveWindow();
+    movePointer(e.clientX, e.clientY);
 });
 
 document.addEventListener("touchmove", (e) => {
-    const t = e.touches[0];
-    cursorX = t.clientX;
-    cursorY = t.clientY;
-    drawCursor();
-
-    if (dragging) moveWindow();
+    const p = getPoint(e);
+    movePointer(p.clientX, p.clientY);
     e.preventDefault();
 }, { passive: false });
 
-/* WINDOW SYSTEM */
+/* =========================
+   DRAG SYSTEM
+========================= */
+
 function focus(win) {
-    z++;
-    win.style.zIndex = z;
+    zIndex++;
+    win.style.zIndex = zIndex;
 }
 
-function open(win) {
-    win.style.display = "block";
-    focus(win);
-}
-
-/* DRAGGING */
 function startDrag(win, x, y) {
-    dragging = win;
+    draggingWin = win;
+
     focus(win);
 
     offsetX = x - win.offsetLeft;
     offsetY = y - win.offsetTop;
 }
 
-function moveWindow() {
-    if (!dragging) return;
-
-    dragging.style.left = (cursorX - offsetX) + "px";
-    dragging.style.top = (cursorY - offsetY) + "px";
-}
-
 function stopDrag() {
-    dragging = null;
+    draggingWin = null;
 }
 
-/* WRITE WINDOW */
+/* =========================
+   WINDOW DRAG (WRITE)
+========================= */
+
 writeWindow.querySelector(".titlebar")
 .addEventListener("mousedown", (e) => {
     startDrag(writeWindow, e.clientX, e.clientY);
@@ -83,35 +100,89 @@ writeWindow.querySelector(".titlebar")
 
 writeWindow.querySelector(".titlebar")
 .addEventListener("touchstart", (e) => {
-    const t = e.touches[0];
-    startDrag(writeWindow, t.clientX, t.clientY);
+    const p = getPoint(e);
+    startDrag(writeWindow, p.clientX, p.clientY);
 });
 
-/* CALC WINDOW */
+/* =========================
+   WINDOW DRAG (CALC)
+========================= */
+
 calcWindow.querySelector(".titlebar")
 .addEventListener("mousedown", (e) => {
     startDrag(calcWindow, e.clientX, e.clientY);
+});
+
+calcWindow.querySelector(".titlebar")
+.addEventListener("touchstart", (e) => {
+    const p = getPoint(e);
+    startDrag(calcWindow, p.clientX, p.clientY);
 });
 
 /* STOP DRAG */
 document.addEventListener("mouseup", stopDrag);
 document.addEventListener("touchend", stopDrag);
 
-/* ICONS */
+/* =========================
+   ICON SYSTEM (TOUCH + MOUSE)
+========================= */
+
 icons.forEach(icon => {
-    icon.addEventListener("dblclick", () => {
-        if (icon.dataset.app === "write") open(writeWindow);
-        if (icon.dataset.app === "calc") open(calcWindow);
+
+    icon.addEventListener("mousedown", () => {
+        handleOpen(icon);
     });
+
+    icon.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+
+        const now = Date.now();
+
+        // double tap detection
+        if (now - lastTapTime < 350) {
+            handleOpen(icon);
+        }
+
+        lastTapTime = now;
+    }, { passive: false });
+
 });
 
-/* TRASH */
+function handleOpen(icon) {
+    const app = icon.dataset.app;
+
+    if (app === "write") openWindow(writeWindow);
+    if (app === "calc") openWindow(calcWindow);
+}
+
+/* =========================
+   OPEN WINDOW
+========================= */
+
+function openWindow(win) {
+    win.style.display = "block";
+    focus(win);
+}
+
+/* =========================
+   TRASH
+========================= */
+
 trash.addEventListener("click", () => {
     writeWindow.style.display = "none";
     calcWindow.style.display = "none";
 });
 
-/* CALCULATOR */
+trash.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    writeWindow.style.display = "none";
+    calcWindow.style.display = "none";
+}, { passive: false });
+
+/* =========================
+   CALCULATOR
+========================= */
+
 document.getElementById("calcInput")
 .addEventListener("input", (e) => {
     try {
@@ -122,7 +193,10 @@ document.getElementById("calcInput")
     }
 });
 
-/* RESOLUTION */
+/* =========================
+   RESOLUTION SYSTEM
+========================= */
+
 resolution.addEventListener("change", () => {
     const v = resolution.value;
 
@@ -133,17 +207,29 @@ resolution.addEventListener("change", () => {
     }
 
     const [w, h] = v.split("x");
+
     screen.style.width = w + "px";
     screen.style.height = h + "px";
 });
 
-/* STARTUP */
-window.onload = () => {
-    console.log("Macintosh System 1 Loaded");
+/* =========================
+   TOUCH SCROLL LOCK (IMPORTANT)
+========================= */
+
+document.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+}, { passive: false });
+
+/* =========================
+   STARTUP
+========================= */
+
+window.addEventListener("load", () => {
+    console.log("Macintosh System 1 Touch OS Ready");
 
     writeWindow.style.left = "80px";
     writeWindow.style.top = "60px";
 
-    calcWindow.style.left = "120px";
+    calcWindow.style.left = "140px";
     calcWindow.style.top = "100px";
-};
+});
