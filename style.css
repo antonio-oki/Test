@@ -1,18 +1,43 @@
 body {
     margin: 0;
-    background: #777;
-    font-family: monospace;
+    background: black;
     overflow: hidden;
+    font-family: monospace;
+}
+
+/* BOOT SCREEN */
+#boot {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: black;
+    color: white;
+
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
+
+    font-size: 18px;
+    z-index: 999999;
 }
 
-#resolutionSelect {
-    margin: 8px;
+#bootText {
+    animation: flicker 0.15s infinite;
 }
 
+@keyframes flicker {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
+}
+
+/* SYSTEM HIDDEN UNTIL BOOT FINISH */
+#system {
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
+/* SCREEN */
 #screen {
     width: 512px;
     height: 342px;
@@ -20,29 +45,23 @@ body {
     border: 4px solid black;
     position: relative;
     overflow: hidden;
+    margin: auto;
 }
 
+/* MENU BAR */
 #menubar {
     height: 22px;
     border-bottom: 2px solid black;
     padding-left: 6px;
     line-height: 22px;
-    font-weight: bold;
 }
 
-#desktop {
-    position: relative;
-    width: 100%;
-    height: calc(100% - 22px);
-}
-
+/* ICONS */
 .icon {
     width: 70px;
     text-align: center;
     margin: 10px;
     cursor: pointer;
-    user-select: none;
-    font-size: 14px;
 }
 
 .icon span {
@@ -50,15 +69,17 @@ body {
     font-size: 11px;
 }
 
+/* WINDOWS */
 .window {
     position: absolute;
     width: 220px;
-    background: white;
     border: 2px solid black;
+    background: white;
     display: none;
 }
 
 .titlebar {
+    height: 20px;
     background: repeating-linear-gradient(
         90deg,
         black 0px,
@@ -66,33 +87,19 @@ body {
         white 2px,
         white 4px
     );
-    height: 20px;
     cursor: move;
     text-align: center;
     line-height: 20px;
-    font-weight: bold;
-    border-bottom: 2px solid black;
 }
 
-.content {
-    padding: 6px;
-}
-
-textarea {
-    width: 100%;
-    height: 100px;
-}
-
-/* TRASH BOTTOM RIGHT */
+/* TRASH */
 #trash {
     position: absolute;
     right: 10px;
     bottom: 10px;
-    text-align: center;
-    font-size: 14px;
-    cursor: pointer;
 }
 
+/* CURSOR */
 #cursor {
     position: fixed;
     width: 14px;
@@ -100,5 +107,5 @@ textarea {
     background: black;
     clip-path: polygon(0 0,100% 50%,60% 60%,70% 100%,50% 100%,40% 60%,0 0);
     pointer-events: none;
-    z-index: 9999;
+    z-index: 99999;
 }
