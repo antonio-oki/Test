@@ -1,10 +1,4 @@
-body { background: #333; display: flex; justify-content: center; height: 100vh; align-items: center; margin: 0; font-family: sans-serif; }
-.phone-frame { width: 320px; height: 480px; background: #000; border: 10px solid #555; border-radius: 20px; overflow: hidden; color: white; display: flex; flex-direction: column; }
-.status-bar { background: #222; padding: 5px 10px; font-size: 12px; display: flex; justify-content: space-between; border-bottom: 1px solid #444; }
-.screen { padding: 20px; flex-grow: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-content: start; }
-.icon { background: #444; padding: 15px; text-align: center; cursor: pointer; border-radius: 10px; transition: 0.2s; }
-.icon:hover { background: #666; }
-.hidden { display: none; }
-.file-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-.file-item { background: #222; padding: 10px; border-bottom: 1px solid #444; cursor: pointer; }
-button { margin-top: 20px; padding: 10px; cursor: pointer; background: #555; color: white; border: none; border-radius: 5px; }
+/* Add these styles to your existing CSS */
+.dock { height: 60px; background: #222; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #444; }
+.dock-icon { cursor: pointer; font-size: 20px; padding: 10px; }
+.screen { height: 360px; overflow-y: auto; } /* Prevents content from pushing the dock off-screen */
