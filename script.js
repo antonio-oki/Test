@@ -1,4 +1,4 @@
-// State variables
+// App State
 let brightness = 100;
 let wifiStatus = false;
 
@@ -21,7 +21,6 @@ function openApp(appName) {
     }
 }
 
-// Function to render Settings interface
 function renderSettings(container) {
     container.innerHTML = `
         <h2>Settings</h2>
@@ -37,7 +36,6 @@ function renderSettings(container) {
     `;
 }
 
-// Settings Logic
 function updateBrightness(val) {
     brightness = val;
     document.querySelector('.phone-frame').style.filter = `brightness(${val}%)`;
@@ -45,7 +43,7 @@ function updateBrightness(val) {
 
 function toggleWifi(checked) {
     wifiStatus = checked;
-    console.log("Wi-Fi is now: " + (checked ? "ON" : "OFF"));
+    document.getElementById('wifi-indicator').innerText = checked ? '📶' : '';
 }
 
 function goHome() {
@@ -53,6 +51,7 @@ function goHome() {
     document.getElementById('desktop').classList.remove('hidden');
 }
 
+// Clock logic
 setInterval(() => {
     document.getElementById('time').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }, 1000);
