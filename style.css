@@ -5,3 +5,4 @@ body { background: #333; display: flex; justify-content: center; height: 100vh; 
 .icon { background: #444; padding: 15px; text-align: center; cursor: pointer; border-radius: 10px; }
 .hidden { display: none; }
 button { margin-top: 20px; padding: 10px; cursor: pointer; }
+
