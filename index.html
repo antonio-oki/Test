@@ -1,29 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="style.css">
-    <title>Android 1.0 Sim</title>
-</head>
-<body>
-    <div class="phone-frame">
-        <div class="status-bar">
-            <span id="time">12:00 PM</span>
-            <span>Battery: 100%</span>
-        </div>
-        
-        <div id="desktop" class="screen">
-            <div class="icon" onclick="openApp('Browser')">🌐<br>Browser</div>
-            <div class="icon" onclick="openApp('Settings')">⚙️<br>Settings</div>
-            <div class="icon" onclick="openApp('Messages')">✉️<br>Messages</div>
-            <div class="icon" onclick="openApp('Files')">📁<br>Files</div>
-        </div>
-
-        <div id="app-window" class="screen hidden">
-            <div id="app-content"></div>
-        </div>
+<div class="phone-frame">
+    <div class="status-bar">
+        <span id="time">12:00 PM</span>
+        <span>Battery: 100%</span>
     </div>
-    <script src="script.js"></script>
-</body>
-</html>
+    
+    <div id="desktop" class="screen">
+        <div class="icon" onclick="openApp('Browser')">🌐<br>Browser</div>
+        <div class="icon" onclick="openApp('Settings')">⚙️<br>Settings</div>
+        <div class="icon" onclick="openApp('Messages')">✉️<br>Messages</div>
+        <div class="icon" onclick="openApp('Files')">📁<br>Files</div>
+    </div>
 
+    <div id="app-window" class="screen hidden">
+        <div id="app-content"></div>
+    </div>
+
+    <!-- Persistent Dock -->
+    <div class="dock">
+        <div class="dock-icon" onclick="goHome()">🏠</div>
+        <div class="dock-icon" onclick="openApp('Browser')">🌐</div>
+        <div class="dock-icon" onclick="openApp('Messages')">✉️</div>
+    </div>
+</div>
