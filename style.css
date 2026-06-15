@@ -1,95 +1,69 @@
 body {
     margin: 0;
-    background: black;
-    overflow: hidden;
-    font-family: monospace;
+    background: #c0c0c0;
+    font-family: Chicago, monospace;
 }
 
-/* BOOT SCREEN */
+/* BOOT */
 #boot {
     position: fixed;
     width: 100%;
     height: 100%;
-    background: black;
-    color: white;
-
+    background: white;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    font-size: 18px;
-    z-index: 999999;
-}
-
-#bootText {
-    animation: flicker 0.15s infinite;
-}
-
-@keyframes flicker {
-    0% { opacity: 1; }
-    50% { opacity: 0.4; }
-    100% { opacity: 1; }
-}
-
-/* SYSTEM HIDDEN UNTIL BOOT FINISH */
-#system {
-    opacity: 0;
-    transition: opacity 1s ease;
-}
-
-/* SCREEN */
-#screen {
-    width: 512px;
-    height: 342px;
-    background: white;
-    border: 4px solid black;
-    position: relative;
-    overflow: hidden;
-    margin: auto;
+    font-size: 22px;
 }
 
 /* MENU BAR */
-#menubar {
-    height: 22px;
+#menuBar {
+    height: 20px;
+    background: white;
     border-bottom: 2px solid black;
-    padding-left: 6px;
-    line-height: 22px;
+    display: flex;
+    gap: 20px;
+    padding-left: 10px;
+    font-size: 12px;
+}
+
+/* MENU DROPDOWN */
+.menuDrop {
+    position: absolute;
+    top: 20px;
+    background: white;
+    border: 2px solid black;
+    display: none;
+    font-size: 12px;
+}
+
+/* DESKTOP */
+#desktop {
+    height: calc(100vh - 20px);
+    position: relative;
 }
 
 /* ICONS */
 .icon {
-    width: 70px;
+    width: 80px;
     text-align: center;
     margin: 10px;
     cursor: pointer;
 }
 
-.icon span {
-    display: block;
-    font-size: 11px;
-}
-
 /* WINDOWS */
 .window {
     position: absolute;
-    width: 220px;
+    width: 250px;
     border: 2px solid black;
     background: white;
-    display: none;
 }
 
-.titlebar {
-    height: 20px;
-    background: repeating-linear-gradient(
-        90deg,
-        black 0px,
-        black 2px,
-        white 2px,
-        white 4px
-    );
+.title {
+    background: black;
+    color: white;
+    padding: 2px;
     cursor: move;
-    text-align: center;
-    line-height: 20px;
 }
 
 /* TRASH */
@@ -99,13 +73,20 @@ body {
     bottom: 10px;
 }
 
-/* CURSOR */
-#cursor {
+/* ALERT */
+#alert {
     position: fixed;
-    width: 14px;
-    height: 14px;
-    background: black;
-    clip-path: polygon(0 0,100% 50%,60% 60%,70% 100%,50% 100%,40% 60%,0 0);
-    pointer-events: none;
-    z-index: 99999;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    background: rgba(0,0,0,0.4);
+}
+
+#alertBox {
+    background: white;
+    width: 200px;
+    margin: 30% auto;
+    padding: 10px;
+    border: 2px solid black;
 }
