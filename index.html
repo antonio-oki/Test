@@ -3,66 +3,64 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Macintosh System 1</title>
+<title>Macintosh System 1 Simulator</title>
 <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<!-- BOOT SCREEN -->
+<!-- BOOT -->
 <div id="boot">
-    <div id="bootText">Starting Macintosh...</div>
+    <div id="bootText">Macintosh</div>
 </div>
 
-<!-- MAIN SYSTEM -->
-<div id="system">
-
-<select id="resolutionSelect">
-    <option value="512x342">512×342</option>
-    <option value="640x480">640×480</option>
-    <option value="800x600">800×600</option>
-    <option value="fullscreen">Fullscreen</option>
-</select>
-
-<div id="screen">
-
-    <div id="menubar">
-         File Edit View Special
-    </div>
-
-    <div id="desktop">
-
-        <div class="icon" data-app="write">
-            📄
-            <span>Write</span>
-        </div>
-
-        <div class="icon" data-app="calc">
-            🧮
-            <span>Calculator</span>
-        </div>
-
-        <div id="trash">🗑️ Trash</div>
-
-        <div id="writeWindow" class="window">
-            <div class="titlebar">Write</div>
-            <div class="content">
-                <textarea>Welcome</textarea>
-            </div>
-        </div>
-
-        <div id="calcWindow" class="window">
-            <div class="titlebar">Calculator</div>
-            <div class="content">
-                <input id="calcInput">
-                <div id="calcOut"></div>
-            </div>
-        </div>
-
-    </div>
+<!-- MENU BAR -->
+<div id="menuBar">
+    <div class="menuItem" data-menu="apple"></div>
+    <div class="menuItem" data-menu="file">File</div>
+    <div class="menuItem" data-menu="edit">Edit</div>
+    <div class="menuItem" data-menu="special">Special</div>
 </div>
 
-<div id="cursor"></div>
+<!-- MENUS -->
+<div class="menuDrop" id="fileMenu">
+    <div>New Folder</div>
+    <div>Close</div>
+</div>
+
+<div class="menuDrop" id="specialMenu">
+    <div>Empty Trash</div>
+    <div>Restart</div>
+</div>
+
+<!-- DESKTOP -->
+<div id="desktop">
+
+    <div class="icon" data-app="finder">💾 Macintosh HD</div>
+    <div class="icon" data-app="write">📄 Write</div>
+    <div class="icon" data-app="calc">🧮 Calculator</div>
+
+    <div id="trash">🗑 Trash</div>
+
+    <!-- WINDOWS -->
+    <div class="window" id="writeWin">
+        <div class="title">Write</div>
+        <textarea>Welcome to Macintosh</textarea>
+    </div>
+
+    <div class="window" id="calcWin">
+        <div class="title">Calculator</div>
+        <input id="calcInput">
+        <div id="calcOut"></div>
+    </div>
+
+    <!-- ALERT -->
+    <div id="alert">
+        <div id="alertBox">
+            <div id="alertText">Error</div>
+            <button onclick="closeAlert()">OK</button>
+        </div>
+    </div>
 
 </div>
 
