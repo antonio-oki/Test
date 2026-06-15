@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
     <title>Android 1.0 Sim</title>
 </head>
@@ -15,11 +16,11 @@
             <div class="icon" onclick="openApp('Browser')">🌐<br>Browser</div>
             <div class="icon" onclick="openApp('Settings')">⚙️<br>Settings</div>
             <div class="icon" onclick="openApp('Messages')">✉️<br>Messages</div>
+            <div class="icon" onclick="openApp('Files')">📁<br>Files</div>
         </div>
 
         <div id="app-window" class="screen hidden">
-            <h2 id="app-title">App</h2>
-            <button onclick="goHome()">Home</button>
+            <div id="app-content"></div>
         </div>
     </div>
     <script src="script.js"></script>
