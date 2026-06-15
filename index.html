@@ -2,34 +2,80 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Android 1.0 Sim</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android 1.0 pixel-Perfect Simulator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="phone-frame">
-        <div class="status-bar">
-            <span id="time">12:00</span>
-            <span id="wifi-indicator"></span>
-            <span>100%</span>
-        </div>
-        
-        <div id="desktop" class="screen">
-            <div class="icon" onclick="openApp('Browser')">🌐<br>Browser</div>
-            <div class="icon" onclick="openApp('Settings')">⚙️<br>Settings</div>
-            <div class="icon" onclick="openApp('Messages')">✉️<br>Messages</div>
-            <div class="icon" onclick="openApp('Files')">📁<br>Files</div>
+    <div class="phone-container">
+        <div class="phone-frame">
+            
+            <div class="status-bar">
+                <div class="status-left">
+                    <span id="wifi-indicator" class="status-icon">📶</span>
+                    <span class="status-icon" style="font-size: 9px; letter-spacing: -1px;">📶⃠</span>
+                </div>
+                <div class="status-right">
+                    <span class="status-icon">🔋</span>
+                    <span id="time-digital">9:54 PM</span>
+                </div>
+            </div>
+            
+            <div class="screen-content">
+                
+                <div id="desktop" class="screen">
+                    
+                    <div class="clock-widget">
+                        <div class="clock-face">
+                            <div id="clock-hour" class="clock-hand hour"></div>
+                            <div id="clock-minute" class="clock-hand minute"></div>
+                            <div class="clock-center-pin"></div>
+                        </div>
+                    </div>
+
+                    <div class="desktop-grid">
+                        <div class="icon" onclick="openApp('Browser')">
+                            <div class="icon-img-wrapper browser-bg">🌐</div>
+                            <span>Browser</span>
+                        </div>
+                        <div class="icon" onclick="openApp('Settings')">
+                            <div class="icon-img-wrapper settings-bg">⚙️</div>
+                            <span>Settings</span>
+                        </div>
+                        <div class="icon" onclick="openApp('Messages')">
+                            <div class="icon-img-wrapper messages-bg">✉️</div>
+                            <span>Messages</span>
+                        </div>
+                        <div class="icon" onclick="openApp('Files')">
+                            <div class="icon-img-wrapper files-bg">📁</div>
+                            <span>Files</span>
+                        </div>
+                    </div>
+
+                    <div class="drawer-handle" onclick="alert('All system apps are already mapped out onto your active desktop grid workspace views.')">
+                        <div class="handle-left-dots">···</div>
+                        <div class="handle-center-circle">
+                            <div class="handle-arrow-up">▲</div>
+                        </div>
+                        <div class="handle-right-dots">···</div>
+                    </div>
+                </div>
+
+                <div id="app-window" class="screen hidden">
+                    <div id="app-header">Application Workspace</div>
+                    <div id="app-body"></div>
+                </div>
+            </div>
+
         </div>
 
-        <div id="app-window" class="screen hidden">
-            <div id="app-content"></div>
-        </div>
-
-        <div class="dock">
-            <div class="dock-icon" onclick="goHome()">🏠</div>
-            <div class="dock-icon" onclick="openApp('Browser')">🌐</div>
-            <div class="dock-icon" onclick="openApp('Messages')">✉️</div>
+        <div class="hardware-buttons">
+            <button class="hw-btn" onclick="goBack()">↩ BACK</button>
+            <button class="hw-btn" onclick="alert('Android 1.0 Menu Context Panel System Options: None available inside this view layer.')">☰ MENU</button>
+            <button class="hw-btn" onclick="goHome()">🏠 HOME</button>
         </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
