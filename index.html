@@ -3,136 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Android 1.0 Simulation</title>
-    <style>
-        /* CSS for the Phone Shell and Interface */
-        body { 
-            margin: 0; 
-            background: #222; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            font-family: 'Arial', sans-serif; 
-        }
-        
-        #phone { 
-            width: 320px; 
-            height: 480px; 
-            background: #000; 
-            position: relative; 
-            overflow: hidden; 
-            border: 10px solid #111; 
-            border-radius: 30px; 
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-        
-        #status-bar { 
-            height: 25px; 
-            background: #000; 
-            color: #fff; 
-            font-size: 12px; 
-            padding: 5px 10px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-        }
-        
-        #desktop { 
-            height: 400px; 
-            background: linear-gradient(180deg, #060 0%, #000 100%); 
-            display: flex;
-            flex-wrap: wrap;
-            padding: 20px;
-        }
-        
-        #drawer { 
-            position: absolute; 
-            bottom: -400px; 
-            width: 100%; 
-            height: 400px; 
-            background: #222; 
-            transition: bottom 0.4s ease-in-out; 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        
-        #drawer.open { bottom: 40px; }
-        
-        .icon { 
-            width: 60px; 
-            height: 60px; 
-            background: #444; 
-            margin: 10px; 
-            border-radius: 10px; 
-            text-align: center; 
-            color: white; 
-            font-size: 10px; 
-            display: flex; 
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        #handle { 
-            position: absolute; 
-            bottom: 0; 
-            width: 100%; 
-            height: 40px; 
-            background: #333; 
-            color: white; 
-            text-align: center; 
-            line-height: 40px; 
-            cursor: pointer; 
-            font-weight: bold;
-        }
-    </style>
+    <title>Android 1.0 Sim</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="phone">
     <div id="status-bar">
         <span id="time">0:00 AM</span>
-        <span>GSM | 100%</span>
+        <span class="status-right">Signal █ 100%</span>
     </div>
     
     <div id="desktop">
         <div class="icon">Clock</div>
         <div class="icon">Settings</div>
+        <div class="icon">Calculator</div>
     </div>
     
     <div id="drawer">
-        <div class="icon">Maps</div>
-        <div class="icon">Browser</div>
-        <div class="icon">Market</div>
-        <div class="icon">Camera</div>
-        <div class="icon">Gallery</div>
-        <div class="icon">Music</div>
+        <div class="drawer-header">Drag to see all apps</div>
+        <div class="grid">
+            <div class="icon">Maps</div>
+            <div class="icon">Browser</div>
+            <div class="icon">Market</div>
+            <div class="icon">Camera</div>
+            <div class="icon">Gallery</div>
+            <div class="icon">Music</div>
+        </div>
     </div>
     
-    <div id="handle" onclick="toggleDrawer()">▲ App Drawer</div>
+    <div id="handle" onclick="toggleDrawer()">▲</div>
 </div>
 
 <script>
-    // Logic for 12-hour clock
     function updateTime() {
         const now = new Date();
         let hours = now.getHours();
         const minutes = now.getMinutes().toString().padStart(2, '0');
         const ampm = hours >= 12 ? 'PM' : 'AM';
-        
-        hours = hours % 12;
-        hours = hours ? hours : 12; 
-        
+        hours = hours % 12 || 12; 
         document.getElementById('time').innerText = hours + ":" + minutes + " " + ampm;
     }
     
-    // Logic for Drawer Toggle
     function toggleDrawer() {
-        const drawer = document.getElementById('drawer');
-        drawer.classList.toggle('open');
+        document.getElementById('drawer').classList.toggle('open');
     }
 
     setInterval(updateTime, 1000);
