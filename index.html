@@ -2,80 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Android 1.0 pixel-Perfect Simulator</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Android 1.0 Sim</title>
+    <style>
+        body { margin: 0; background: #333; display: flex; justify-content: center; height: 100vh; font-family: sans-serif; }
+        #phone { width: 320px; height: 480px; background: #000; position: relative; overflow: hidden; border: 8px solid #222; border-radius: 20px; }
+        
+        #status-bar { height: 25px; background: #000; color: #fff; font-size: 12px; padding: 5px; display: flex; justify-content: space-between; }
+        #desktop { height: 400px; background: linear-gradient(#060, #000); }
+        
+        #drawer { 
+            position: absolute; bottom: -400px; width: 100%; height: 400px; 
+            background: #222; transition: bottom 0.3s; display: grid; grid-template-columns: repeat(3, 1fr); padding: 10px;
+        }
+        #drawer.open { bottom: 0; }
+        
+        .icon { width: 50px; height: 50px; background: #555; margin: 10px; border-radius: 5px; text-align: center; color: white; line-height: 50px; font-size: 10px; }
+        #handle { position: absolute; bottom: 0; width: 100%; height: 40px; background: #444; color: white; text-align: center; cursor: pointer; }
+    </style>
 </head>
 <body>
-    <div class="phone-container">
-        <div class="phone-frame">
-            
-            <div class="status-bar">
-                <div class="status-left">
-                    <span id="wifi-indicator" class="status-icon">📶</span>
-                    <span class="status-icon" style="font-size: 9px; letter-spacing: -1px;">📶⃠</span>
-                </div>
-                <div class="status-right">
-                    <span class="status-icon">🔋</span>
-                    <span id="time-digital">9:54 PM</span>
-                </div>
-            </div>
-            
-            <div class="screen-content">
-                
-                <div id="desktop" class="screen">
-                    
-                    <div class="clock-widget">
-                        <div class="clock-face">
-                            <div id="clock-hour" class="clock-hand hour"></div>
-                            <div id="clock-minute" class="clock-hand minute"></div>
-                            <div class="clock-center-pin"></div>
-                        </div>
-                    </div>
 
-                    <div class="desktop-grid">
-                        <div class="icon" onclick="openApp('Browser')">
-                            <div class="icon-img-wrapper browser-bg">🌐</div>
-                            <span>Browser</span>
-                        </div>
-                        <div class="icon" onclick="openApp('Settings')">
-                            <div class="icon-img-wrapper settings-bg">⚙️</div>
-                            <span>Settings</span>
-                        </div>
-                        <div class="icon" onclick="openApp('Messages')">
-                            <div class="icon-img-wrapper messages-bg">✉️</div>
-                            <span>Messages</span>
-                        </div>
-                        <div class="icon" onclick="openApp('Files')">
-                            <div class="icon-img-wrapper files-bg">📁</div>
-                            <span>Files</span>
-                        </div>
-                    </div>
-
-                    <div class="drawer-handle" onclick="alert('All system apps are already mapped out onto your active desktop grid workspace views.')">
-                        <div class="handle-left-dots">···</div>
-                        <div class="handle-center-circle">
-                            <div class="handle-arrow-up">▲</div>
-                        </div>
-                        <div class="handle-right-dots">···</div>
-                    </div>
-                </div>
-
-                <div id="app-window" class="screen hidden">
-                    <div id="app-header">Application Workspace</div>
-                    <div id="app-body"></div>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="hardware-buttons">
-            <button class="hw-btn" onclick="goBack()">↩ BACK</button>
-            <button class="hw-btn" onclick="alert('Android 1.0 Menu Context Panel System Options: None available inside this view layer.')">☰ MENU</button>
-            <button class="hw-btn" onclick="goHome()">🏠 HOME</button>
-        </div>
+<div id="phone">
+    <div id="status-bar"><span id="time">0:00</span><span>GSM</span></div>
+    <div id="desktop"></div>
+    <div id="drawer">
+        <div class="icon">Maps</div>
+        <div class="icon">Browser</div>
+        <div class="icon">Market</div>
+        <div class="icon">Camera</div>
     </div>
+    <div id="handle" onclick="document.getElementById('drawer').classList.toggle('open')">▲ App Drawer</div>
+</div>
 
-    <script src="script.js"></script>
+<script>
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('time').innerText = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+</script>
+
 </body>
 </html>
