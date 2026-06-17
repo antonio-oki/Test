@@ -3,39 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Android 1.0 Sim</title>
+    <title>Android 1.0 Functional Sim</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="phone">
-    <div id="status-bar">
-        <span id="time">0:00 AM</span>
-        <span class="status-right">Signal █ 100%</span>
-    </div>
-    
-    <div id="desktop">
-        <div class="icon">Clock</div>
-        <div class="icon">Settings</div>
-        <div class="icon">Calculator</div>
-    </div>
-    
-    <div id="drawer">
-        <div class="drawer-header">Drag to see all apps</div>
-        <div class="grid">
-            <div class="icon">Maps</div>
-            <div class="icon">Browser</div>
-            <div class="icon">Market</div>
-            <div class="icon">Camera</div>
-            <div class="icon">Gallery</div>
-            <div class="icon">Music</div>
+    <div id="screen">
+        <div id="status-bar">
+            <span id="time">0:00 AM</span>
+            <span class="status-right">3G █ 100%</span>
+        </div>
+        
+        <div id="desktop">
+            <div class="icon" onclick="openApp('clock')">🕒<br>Clock</div>
+            <div class="icon" onclick="openApp('calculator')">➕<br>Calc</div>
+            <div class="icon" onclick="openApp('settings')">⚙️<br>Settings</div>
+        </div>
+        
+        <div id="drawer">
+            <div class="grid">
+                <div class="icon" onclick="openApp('browser')">🌐<br>Browser</div>
+                <div class="icon" onclick="openApp('maps')">🗺️<br>Maps</div>
+                <div class="icon" onclick="openApp('market')">🛍️<br>Market</div>
+                <div class="icon" onclick="openApp('clock')">🕒<br>Clock</div>
+                <div class="icon" onclick="openApp('calculator')">➕<br>Calc</div>
+                <div class="icon" onclick="openApp('settings')">⚙️<br>Settings</div>
+            </div>
+        </div>
+        
+        <div id="handle" onclick="toggleDrawer()">▲</div>
+
+        <div id="app-window">
+            <div id="app-content"></div>
         </div>
     </div>
-    
-    <div id="handle" onclick="toggleDrawer()">▲</div>
+
+    <div id="hardware-chin">
+        <button class="hw-btn" onclick="goHome()">🏠 HOME</button>
+        <button class="hw-btn" onclick="goHome()">↩ BACK</button>
+    </div>
 </div>
 
 <script>
+    // 12-Hour Clock Logic
     function updateTime() {
         const now = new Date();
         let hours = now.getHours();
@@ -44,13 +55,117 @@
         hours = hours % 12 || 12; 
         document.getElementById('time').innerText = hours + ":" + minutes + " " + ampm;
     }
-    
-    function toggleDrawer() {
-        document.getElementById('drawer').classList.toggle('open');
-    }
-
     setInterval(updateTime, 1000);
     updateTime();
+
+    // Drawer Toggle Logic
+    function toggleDrawer() {
+        document.getElementById('drawer').classList.toggle('open');
+        const handle = document.getElementById('handle');
+        handle.innerText = handle.innerText === '▲' ? '▼' : '▲';
+    }
+
+    // App Management System
+    function openApp(app) {
+        const win = document.getElementById('app-window');
+        const content = document.getElementById('app-content');
+        win.style.display = "block";
+        
+        // Close drawer if open
+        document.getElementById('drawer').classList.remove('open');
+        document.getElementById('handle').innerText = '▲';
+
+        if (app === 'clock') {
+            content.innerHTML = `
+                <div class="app-sec-clock">
+                    <h2 id="big-time">00:00:00</h2>
+                    <p style="color:#aaa;">Android 1.0 Desk Clock</p>
+                </div>`;
+            setInterval(() => {
+                if(document.getElementById('big-time')) {
+                    document.getElementById('big-time').innerText = new Date().toLocaleTimeString();
+                }
+            }, 1000);
+        } 
+        
+        else if (app === 'calculator') {
+            content.innerHTML = `
+                <div class="calc-app">
+                    <input type="text" id="calc-screen" readonly value="0">
+                    <div class="calc-grid">
+                        <button onclick="calcPress('7')">7</button><button onclick="calcPress('8')">8</button><button onclick="calcPress('9')">9</button><button onclick="calcPress('/')">/</button>
+                        <button onclick="calcPress('4')">4</button><button onclick="calcPress('5')">5</button><button onclick="calcPress('6')">6</button><button onclick="calcPress('*')">*</button>
+                        <button onclick="calcPress('1')">1</button><button onclick="calcPress('2')">2</button><button onclick="calcPress('3')">3</button><button onclick="calcPress('-')">-</button>
+                        <button onclick="calcClear()">C</button><button onclick="calcPress('0')">0</button><button onclick="calcEval()">=</button><button onclick="calcPress('+')">+</button>
+                    </div>
+                </div>`;
+        } 
+        
+        else if (app === 'settings') {
+            content.innerHTML = `
+                <div class="settings-app">
+                    <h3>Settings</h3>
+                    <hr>
+                    <p>Select Desktop Wallpaper:</p>
+                    <button onclick="setBg('#004d00')">Retro Classic Green</button>
+                    <button onclick="setBg('#001a4d')">Deep Blue Ocean</button>
+                    <button onclick="setBg('#222222')">T-Mobile Slate Dark</button>
+                </div>`;
+        }
+
+        else if (app === 'browser') {
+            content.innerHTML = `
+                <div class="browser-app">
+                    <div class="browser-bar">
+                        <input type="text" id="url-bar" value="https://google.com">
+                        <button onclick="alert('Connecting via 2008 GPRS...')">Go</button>
+                    </div>
+                    <div class="browser-body">
+                        <h4>Google (2008 Mock)</h4>
+                        <input type="text" placeholder="Search the web..."><br><br>
+                        <button>Google Search</button>
+                    </div>
+                </div>`;
+        }
+
+        else if (app === 'maps') {
+            content.innerHTML = `
+                <div class="maps-app">
+                    <div class="maps-header">Google Maps Lite</div>
+                    <div class="maps-graphic">
+                        <div style="position:absolute; top:40%; left:45%;">📍 (You)</div>
+                    </div>
+                    <p style="font-size:11px; margin:5px;">Lat: 37.4220° N, Lon: 122.0841° W (Mountain View)</p>
+                </div>`;
+        }
+
+        else if (app === 'market') {
+            content.innerHTML = `
+                <div class="market-app">
+                    <div class="market-header">Android Market</div>
+                    <p style="padding:10px; font-size:12px; color:#ccc;">Welcome to the Android Market! All applications are currently up to date.</p>
+                </div>`;
+        }
+    }
+
+    function goHome() {
+        document.getElementById('app-window').style.display = "none";
+    }
+
+    // App Helper Actions
+    function calcPress(val) {
+        const scr = document.getElementById('calc-screen');
+        if(scr.value === '0') scr.value = val;
+        else scr.value += val;
+    }
+    function calcClear() { document.getElementById('calc-screen').value = '0'; }
+    function calcEval() {
+        const scr = document.getElementById('calc-screen');
+        try { scr.value = eval(scr.value); } catch { scr.value = "Error"; }
+    }
+    function setBg(color) {
+        document.getElementById('desktop').style.background = `linear-gradient(to bottom, \${color}, #000)`;
+    }
 </script>
 
 </body>
