@@ -4,14 +4,190 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Android 1.0 Functional Sim</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* --- CORE PHONE CONTAINER --- */
+        body { 
+            margin: 0; 
+            background: #1a1a1a; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            font-family: 'Arial', sans-serif; 
+            user-select: none;
+        }
+        #phone { 
+            width: 310px; 
+            height: 560px; 
+            background: #2a2a2a; 
+            position: relative; 
+            border: 4px solid #444; 
+            border-radius: 35px; 
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+        }
+        #screen {
+            width: 100%;
+            height: 480px;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+            border-radius: 30px 30px 0 0;
+        }
+
+        /* --- UI ELEMENTS --- */
+        #status-bar { 
+            height: 25px; 
+            background: #000; 
+            color: #fff; 
+            font-size: 11px; 
+            padding: 0 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border-bottom: 1px solid #222;
+            z-index: 20;
+            position: relative;
+        }
+        #desktop { 
+            height: 455px; 
+            background: linear-gradient(to bottom, #004d00, #000); 
+            padding: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 20px;
+            box-sizing: border-box;
+        }
+
+        /* --- RETRO APP DRAWER --- */
+        #drawer { 
+            position: absolute; 
+            top: 100%; 
+            left: 0;
+            width: 100%; 
+            height: calc(100% - 25px); 
+            background: rgba(15, 15, 15, 0.95); 
+            transition: top 0.3s cubic-bezier(0.1, 0.7, 0.1, 1); 
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 15;
+        }
+        #drawer.open { top: 25px; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        
+        .icon { 
+            width: 65px; 
+            height: 65px; 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 10px; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            font-size: 11px; 
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            text-align: center;
+        }
+        .icon:active { background: rgba(255,255,255,0.3); }
+
+        #handle { 
+            position: absolute; 
+            bottom: 0; 
+            width: 100%; 
+            height: 25px; 
+            background: #333; 
+            color: white; 
+            text-align: center; 
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 25px;
+            border-top: 1px solid #444;
+            z-index: 16;
+        }
+
+        /* --- PHYSICAL HARDWARE CHIN --- */
+        #hardware-chin {
+            width: 100%;
+            height: 80px;
+            background: #1c1c1c;
+            border-radius: 0 0 35px 35px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 2px solid #333;
+        }
+        .hw-btn {
+            background: linear-gradient(to bottom, #444, #222);
+            color: white;
+            border: 1px solid #555;
+            padding: 10px 15px;
+            font-size: 11px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .hw-btn:active { background: #111; }
+
+        /* --- OPERATING SYSTEM WINDOW LAYER --- */
+        #app-window {
+            position: absolute;
+            top: 25px;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 25px);
+            background: #fff;
+            display: none;
+            z-index: 18;
+        }
+        .app-page {
+            width: 100%;
+            height: 100%;
+            display: none;
+            box-sizing: border-box;
+            color: #000;
+        }
+
+        /* --- INDIVIDUAL APP STYLING --- */
+        /* Clock App */
+        .app-sec-clock { text-align: center; padding-top: 80px; background: #000; height: 100%; color: #0f0; font-family: monospace; box-sizing: border-box;}
+        .app-sec-clock h2 { font-size: 32px; margin: 0; }
+        
+        /* Calculator App */
+        .calc-app { padding: 10px; background: #f0f0f0; height: 100%; box-sizing: border-box; }
+        #calc-screen { width: 100%; height: 50px; font-size: 24px; text-align: right; margin-bottom: 10px; padding: 5px; box-sizing: border-box; }
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .calc-grid button { height: 50px; font-size: 18px; cursor: pointer; }
+        
+        /* Settings App */
+        .settings-app { padding: 15px; }
+        .settings-app button { display: block; width: 100%; margin: 10px 0; padding: 10px; cursor: pointer; background: #eee; border: 1px solid #ccc; text-align: left; }
+        
+        /* Browser App */
+        .browser-app { display: flex; flex-direction: column; height: 100%; }
+        .browser-bar { display: flex; background: #ddd; padding: 5px; gap: 5px; }
+        .browser-bar input { flex-grow: 1; padding: 4px; }
+        .browser-body { padding: 20px; text-align: center; background: #fff; flex-grow: 1; }
+        
+        /* Maps App */
+        .maps-app { height: 100%; background: #e5e3df; display: flex; flex-direction: column; }
+        .maps-header { background: #4d79ff; color: white; padding: 8px; font-weight: bold; }
+        .maps-graphic { flex-grow: 1; background: radial-gradient(circle, transparent 20%, #e5e3df 20%), linear-gradient(0deg, #b3c6ff 2px, transparent 2px), linear-gradient(90deg, #b3c6ff 2px, transparent 2px); background-size: 100% 100%, 40px 40px, 40px 40px; position: relative; }
+        
+        /* Market App */
+        .market-app { height: 100%; background: #333; color: white; }
+        .market-header { background: #b50000; padding: 10px; font-weight: bold; font-size: 14px; }
+    </style>
 </head>
 <body>
 
 <div id="phone">
     <div id="screen">
         <div id="status-bar">
-            <span id="time">0:00 AM</span>
+            <span id="time">12:00 AM</span>
             <span class="status-right">3G █ 100%</span>
         </div>
         
@@ -32,10 +208,69 @@
             </div>
         </div>
         
-        <div id="handle" onclick="toggleDrawer()">▲</div>
+        <div id="handle" onclick="toggleDrawer()">▲ Menu</div>
 
         <div id="app-window">
-            <div id="app-content"></div>
+            <div id="app-clock" class="app-page">
+                <div class="app-sec-clock">
+                    <h2 id="big-time">00:00:00 PM</h2>
+                    <p style="color:#aaa;">Android 1.0 Desk Clock</p>
+                </div>
+            </div>
+
+            <div id="app-calculator" class="app-page">
+                <div class="calc-app">
+                    <input type="text" id="calc-screen" readonly value="0">
+                    <div class="calc-grid">
+                        <button onclick="calcPress('7')">7</button><button onclick="calcPress('8')">8</button><button onclick="calcPress('9')">9</button><button onclick="calcPress('/')">/</button>
+                        <button onclick="calcPress('4')">4</button><button onclick="calcPress('5')">5</button><button onclick="calcPress('6')">6</button><button onclick="calcPress('*')">*</button>
+                        <button onclick="calcPress('1')">1</button><button onclick="calcPress('2')">2</button><button onclick="calcPress('3')">3</button><button onclick="calcPress('-')">-</button>
+                        <button onclick="calcClear()">C</button><button onclick="calcPress('0')">0</button><button onclick="calcEval()">=</button><button onclick="calcPress('+')">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="app-settings" class="app-page">
+                <div class="settings-app">
+                    <h3>Settings</h3>
+                    <hr>
+                    <p>Select Desktop Wallpaper:</p>
+                    <button onclick="setBg('#004d00')">Retro Classic Green</button>
+                    <button onclick="setBg('#001a4d')">Deep Blue Ocean</button>
+                    <button onclick="setBg('#222222')">T-Mobile Slate Dark</button>
+                </div>
+            </div>
+
+            <div id="app-browser" class="app-page">
+                <div class="browser-app">
+                    <div class="browser-bar">
+                        <input type="text" id="url-bar" value="https://google.com">
+                        <button onclick="alert('Connecting via 2008 GPRS Network...')">Go</button>
+                    </div>
+                    <div class="browser-body">
+                        <h4>Google (2008 Archive)</h4>
+                        <input type="text" placeholder="Search the web..."><br><br>
+                        <button onclick="alert('Searching...')">Google Search</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="app-maps" class="app-page">
+                <div class="maps-app">
+                    <div class="maps-header">Google Maps Lite</div>
+                    <div class="maps-graphic">
+                        <div style="position:absolute; top:40%; left:45%; font-size: 20px;">📍</div>
+                    </div>
+                    <p style="font-size:11px; margin:5px; color: #333;">Lat: 37.4220° N, Lon: 122.0841° W (Googleplex)</p>
+                </div>
+            </div>
+
+            <div id="app-market" class="app-page">
+                <div class="market-app">
+                    <div class="market-header">Android Market (v1.0)</div>
+                    <p style="padding:15px; font-size:12px; color:#ccc;">Welcome to the Android Market! All applications are currently up to date.</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -46,125 +281,76 @@
 </div>
 
 <script>
-    // 12-Hour Clock Logic
+    // System Clock (12-Hour Engine)
     function updateTime() {
         const now = new Date();
         let hours = now.getHours();
         const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
         const ampm = hours >= 12 ? 'PM' : 'AM';
+        
         hours = hours % 12 || 12; 
-        document.getElementById('time').innerText = hours + ":" + minutes + " " + ampm;
+        
+        const modernTime = hours + ":" + minutes + " " + ampm;
+        document.getElementById('time').innerText = modernTime;
+        
+        // Feed the Clock app view safely if it exists
+        const bigClock = document.getElementById('big-time');
+        if (bigClock) {
+            bigClock.innerText = hours + ":" + minutes + ":" + seconds + " " + ampm;
+        }
     }
     setInterval(updateTime, 1000);
     updateTime();
 
-    // Drawer Toggle Logic
+    // App Drawer Slider Logic
     function toggleDrawer() {
-        document.getElementById('drawer').classList.toggle('open');
-        const handle = document.getElementById('handle');
-        handle.innerText = handle.innerText === '▲' ? '▼' : '▲';
+        const drawer = document.getElementById('drawer');
+        drawer.classList.toggle('open');
+        document.getElementById('handle').innerText = drawer.classList.contains('open') ? '▼ Close' : '▲ Menu';
     }
 
-    // App Management System
-    function openApp(app) {
-        const win = document.getElementById('app-window');
-        const content = document.getElementById('app-content');
-        win.style.display = "block";
+    // Bulletproof Window Switching Manager
+    function openApp(appId) {
+        // Hide all app layout divisions safely
+        const pages = document.querySelectorAll('.app-page');
+        pages.forEach(page => page.style.display = 'none');
         
-        // Close drawer if open
+        // Fire up the target environment container layers
+        document.getElementById('app-window').style.display = "block";
+        document.getElementById('app-' + appId).style.display = "block";
+        
+        // Auto pull down menu slider layout frame
         document.getElementById('drawer').classList.remove('open');
-        document.getElementById('handle').innerText = '▲';
-
-        if (app === 'clock') {
-            content.innerHTML = `
-                <div class="app-sec-clock">
-                    <h2 id="big-time">00:00:00</h2>
-                    <p style="color:#aaa;">Android 1.0 Desk Clock</p>
-                </div>`;
-            setInterval(() => {
-                if(document.getElementById('big-time')) {
-                    document.getElementById('big-time').innerText = new Date().toLocaleTimeString();
-                }
-            }, 1000);
-        } 
-        
-        else if (app === 'calculator') {
-            content.innerHTML = `
-                <div class="calc-app">
-                    <input type="text" id="calc-screen" readonly value="0">
-                    <div class="calc-grid">
-                        <button onclick="calcPress('7')">7</button><button onclick="calcPress('8')">8</button><button onclick="calcPress('9')">9</button><button onclick="calcPress('/')">/</button>
-                        <button onclick="calcPress('4')">4</button><button onclick="calcPress('5')">5</button><button onclick="calcPress('6')">6</button><button onclick="calcPress('*')">*</button>
-                        <button onclick="calcPress('1')">1</button><button onclick="calcPress('2')">2</button><button onclick="calcPress('3')">3</button><button onclick="calcPress('-')">-</button>
-                        <button onclick="calcClear()">C</button><button onclick="calcPress('0')">0</button><button onclick="calcEval()">=</button><button onclick="calcPress('+')">+</button>
-                    </div>
-                </div>`;
-        } 
-        
-        else if (app === 'settings') {
-            content.innerHTML = `
-                <div class="settings-app">
-                    <h3>Settings</h3>
-                    <hr>
-                    <p>Select Desktop Wallpaper:</p>
-                    <button onclick="setBg('#004d00')">Retro Classic Green</button>
-                    <button onclick="setBg('#001a4d')">Deep Blue Ocean</button>
-                    <button onclick="setBg('#222222')">T-Mobile Slate Dark</button>
-                </div>`;
-        }
-
-        else if (app === 'browser') {
-            content.innerHTML = `
-                <div class="browser-app">
-                    <div class="browser-bar">
-                        <input type="text" id="url-bar" value="https://google.com">
-                        <button onclick="alert('Connecting via 2008 GPRS...')">Go</button>
-                    </div>
-                    <div class="browser-body">
-                        <h4>Google (2008 Mock)</h4>
-                        <input type="text" placeholder="Search the web..."><br><br>
-                        <button>Google Search</button>
-                    </div>
-                </div>`;
-        }
-
-        else if (app === 'maps') {
-            content.innerHTML = `
-                <div class="maps-app">
-                    <div class="maps-header">Google Maps Lite</div>
-                    <div class="maps-graphic">
-                        <div style="position:absolute; top:40%; left:45%;">📍 (You)</div>
-                    </div>
-                    <p style="font-size:11px; margin:5px;">Lat: 37.4220° N, Lon: 122.0841° W (Mountain View)</p>
-                </div>`;
-        }
-
-        else if (app === 'market') {
-            content.innerHTML = `
-                <div class="market-app">
-                    <div class="market-header">Android Market</div>
-                    <p style="padding:10px; font-size:12px; color:#ccc;">Welcome to the Android Market! All applications are currently up to date.</p>
-                </div>`;
-        }
+        document.getElementById('handle').innerText = '▲ Menu';
     }
 
+    // Hardware Exit Button Command
     function goHome() {
         document.getElementById('app-window').style.display = "none";
     }
 
-    // App Helper Actions
+    // Calculator Core Processing Logic
     function calcPress(val) {
         const scr = document.getElementById('calc-screen');
-        if(scr.value === '0') scr.value = val;
+        if(scr.value === '0' || scr.value === 'Error') scr.value = val;
         else scr.value += val;
     }
-    function calcClear() { document.getElementById('calc-screen').value = '0'; }
+    function calcClear() { 
+        document.getElementById('calc-screen').value = '0'; 
+    }
     function calcEval() {
         const scr = document.getElementById('calc-screen');
-        try { scr.value = eval(scr.value); } catch { scr.value = "Error"; }
+        try { 
+            scr.value = Function('"use strict";return (' + scr.value + ')')(); 
+        } catch { 
+            scr.value = "Error"; 
+        }
     }
+
+    // Wallpaper Mod Command Engine
     function setBg(color) {
-        document.getElementById('desktop').style.background = `linear-gradient(to bottom, \${color}, #000)`;
+        document.getElementById('desktop').style.background = 'linear-gradient(to bottom, ' + color + ', #000)';
     }
 </script>
 
