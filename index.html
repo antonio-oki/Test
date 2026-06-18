@@ -294,10 +294,8 @@
       </div>
     </div>
 
-    <!-- ===== APP WINDOW ===== -->
     <div id="app-window">
 
-      <!-- PHONE -->
       <div id="app-phone" class="app-page">
         <div id="phone-dial">
           <div class="app-header">Phone</div>
@@ -321,19 +319,26 @@
         </div>
       </div>
 
-      <!-- CONTACTS -->
       <div id="app-contacts" class="app-page">
         <div class="app-header">Contacts</div>
         <div id="contacts-list"></div>
       </div>
 
-      <!-- MAPS -->
+      <div id="app-browser" class="app-page">
+        <div class="browser-app">
+          <div class="browser-bar">
+            <input id="browser-url" value="google.com" readonly>
+            <button class="market-btn" onclick="resetBrowser()">Home</button>
+          </div>
+          <div class="browser-viewport" id="browser-view"></div>
+        </div>
+      </div>
+
       <div id="app-maps" class="app-page">
         <div class="app-header" style="background:#3b8e3b;">Maps</div>
         <iframe style="width:100%; height:calc(100% - 32px); border:none;" src="https://www.openstreetmap.org/export/embed.html?bbox=-122.09,37.41,-122.07,37.43&layer=mapnik&marker=37.422,-122.084"></iframe>
       </div>
 
-      <!-- CAMERA -->
       <div id="app-camera" class="app-page">
         <div class="camera-app">
           <div class="viewfinder" id="viewfinder"><div class="flash-overlay" id="flash"></div></div>
@@ -341,7 +346,6 @@
         </div>
       </div>
 
-      <!-- GMAIL -->
       <div id="app-gmail" class="app-page">
         <div id="gmail-list">
           <div class="app-header gmail-header">Gmail</div>
@@ -353,7 +357,6 @@
         </div>
       </div>
 
-      <!-- IM -->
       <div id="app-im" class="app-page">
         <div id="im-list">
           <div class="app-header im-header">IM</div>
@@ -369,14 +372,12 @@
         </div>
       </div>
 
-      <!-- AMAZON MP3 -->
       <div id="app-amazonmp3" class="app-page">
         <div class="app-header amz-header">Amazon MP3</div>
         <div id="amz-rows"></div>
         <div id="amz-player"></div>
       </div>
 
-      <!-- PICTURES -->
       <div id="app-pictures" class="app-page">
         <div id="pictures-grid">
           <div class="app-header" style="background:#555;">Pictures</div>
@@ -390,7 +391,6 @@
         </div>
       </div>
 
-      <!-- ALARM CLOCK -->
       <div id="app-alarm" class="app-page">
         <div class="app-header" style="background:#444;">Alarm Clock</div>
         <div style="text-align:center; padding:14px; font-size:26px; font-family:monospace;" id="alarm-bigclock">00:00:00</div>
@@ -398,7 +398,6 @@
         <button class="market-btn" style="margin:12px; width:calc(100% - 24px);" onclick="addAlarm()">+ Add alarm</button>
       </div>
 
-      <!-- MARKET -->
       <div id="app-market" class="app-page">
         <div class="market-header app-header">Android Market</div>
         <div class="market-item"><div><strong>Notepad</strong><br><small style="color:#777;">Simple text note-taking utility</small></div><div id="m-actions-notes"><button class="market-btn" onclick="installApp('notes','📝','Notepad')">Install</button></div></div>
@@ -407,7 +406,6 @@
         <div class="market-item"><div><strong>Task Killer</strong><br><small style="color:#777;">Force-stops running apps to free memory</small></div><div id="m-actions-killer"><button class="market-btn" onclick="installApp('killer','🚫','Killer')">Install</button></div></div>
       </div>
 
-      <!-- NOTEPAD (installable) -->
       <div id="app-notes" class="app-page">
         <div class="app-header" style="background:#b8860b;">Notepad</div>
         <div style="padding:10px; height:calc(100% - 60px); display:flex; flex-direction:column;">
@@ -416,13 +414,11 @@
         </div>
       </div>
 
-      <!-- PAINT (installable) -->
       <div id="app-paint" class="app-page">
         <div class="app-header" style="background:#8e44ad;">Doodle Paint<button style="float:right;" onclick="clearCanvas()">Wipe</button></div>
         <canvas id="paintCanvas" style="width:100%; height:calc(100% - 32px); background:#fff;"></canvas>
       </div>
 
-      <!-- SNAKE (installable) -->
       <div id="app-snake" class="app-page" style="background:#111;">
         <div class="app-header" style="background:#1a661a;">Snake — Score: <span id="snake-score">0</span></div>
         <div style="display:flex; flex-direction:column; align-items:center; padding-top:8px;">
@@ -435,14 +431,12 @@
         </div>
       </div>
 
-      <!-- TASK KILLER (installable) -->
       <div id="app-killer" class="app-page">
         <div class="app-header" style="background:#c0392b;">Task Killer</div>
         <div style="padding:10px; font-size:12px;" id="killer-list"></div>
         <button class="market-btn" style="margin:10px; width:calc(100% - 20px); background:#c0392b;" onclick="killAll()">Kill all running apps</button>
       </div>
 
-      <!-- SETTINGS -->
       <div id="app-settings" class="app-page">
         <div id="settings-main-page">
           <div class="app-header settings-header">Settings</div>
@@ -491,12 +485,9 @@
         </div>
       </div>
 
-    </div><!-- /app-window -->
-
-    <div id="brightness-overlay" style="position:absolute; inset:0; background:#000; opacity:0; pointer-events:none; z-index:999;"></div>
+    </div><div id="brightness-overlay" style="position:absolute; inset:0; background:#000; opacity:0; pointer-events:none; z-index:999;"></div>
     <div id="toast"></div>
 
-    <!-- slide-out keyboard tray -->
     <div id="kb-tab" onclick="toggleKeyboard()">SLIDE</div>
   </div>
 
@@ -507,7 +498,6 @@
     <div class="kb-row"><button class="kb-key wide" onclick="typeKey('sym')">SYM</button><button class="kb-key" onclick="typeKey(',')">,</button><button class="kb-key wide" style="max-width:80px; flex:3;" onclick="typeKey(' ')">space</button><button class="kb-key" onclick="typeKey('.')">.</button><button class="kb-key wide" onclick="typeKey('enter')">↵</button></div>
   </div>
 
-  <!-- ===== PHYSICAL CHIN ===== -->
   <div id="chin">
     <div id="chin-row">
       <button class="hwbtn green" onclick="callButton()">CALL</button>
@@ -533,12 +523,50 @@ function updateClock(){
 }
 setInterval(updateClock,1000); updateClock();
 
+/* ============ AUDIO ENGINE & SYSTEM SOUNDS ============ */
+let audioCtx=null;
+
+function initAudio() {
+  if(!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+// Retro UI physical button click sound
+function playClickSound() {
+  try {
+    initAudio();
+    if (!audioCtx) return;
+
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1000, audioCtx.currentTime); // High-pitched short blip
+    
+    gainNode.gain.setValueAtTime(0.03, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.03);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.03);
+  } catch(e) { 
+    console.error("Audio error:", e); 
+  }
+}
+
 /* ============ APP STATE / NAV ============ */
 let appWindowOpen=false;
 let appState={app:null, view:null};
 let currentPane=0;
 
 function openApp(id){
+  playClickSound();
   document.querySelectorAll('.app-page').forEach(p=>p.style.display='none');
   document.getElementById('app-window').style.display='block';
   document.getElementById('app-'+id).style.display='block';
@@ -560,6 +588,7 @@ function openApp(id){
   if(id==='killer'){ renderKiller(); }
 }
 function goHome(){
+  playClickSound();
   document.getElementById('app-window').style.display='none';
   appWindowOpen=false; appState={app:null,view:null};
   document.getElementById('drawer').classList.remove('open');
@@ -567,12 +596,14 @@ function goHome(){
   stopSnakeGame();
 }
 function toggleDrawer(){
+  playClickSound();
   const d=document.getElementById('drawer');
   d.classList.toggle('open');
   document.getElementById('drawer-tab').innerText = d.classList.contains('open') ? '▼ Close' : '▲ All apps';
 }
-function toggleShade(){ document.getElementById('shade').classList.toggle('open'); }
+function toggleShade(){ playClickSound(); document.getElementById('shade').classList.toggle('open'); }
 function clearNotifications(){
+  playClickSound();
   document.getElementById('shade-gmail').innerText='📧 Gmail — no new mail';
   document.getElementById('shade-im').innerText='💬 IM — no new messages';
   document.getElementById('shade').classList.remove('open');
@@ -596,17 +627,20 @@ function setPane(n){
 }
 
 /* ===== HARDWARE BUTTONS ===== */
-function callButton(){ openApp('phone'); }
+function callButton(){ playClickSound(); openApp('phone'); }
 function endCallButton(){
+  playClickSound();
   if(appState.app==='phone' && appState.view==='calling'){ hangUp(); }
   else goHome();
 }
 function menuPress(){
+  playClickSound();
   if(!appWindowOpen){ document.getElementById('home-menu').classList.toggle('open'); }
   else { showToast('No options for this screen'); }
 }
 function closeHomeMenu(){ document.getElementById('home-menu').classList.remove('open'); }
 function backPress(){
+  playClickSound();
   document.getElementById('home-menu').classList.remove('open');
   if(!appWindowOpen) return;
   const a=appState.app, v=appState.view;
@@ -618,8 +652,8 @@ function backPress(){
   goHome();
 }
 function trackballClick(){
+  playClickSound();
   if(!appWindowOpen){ setPane(currentPane+1>2?0:currentPane+1); return; }
-  const win=document.getElementById('app-window');
   const visible=[...document.querySelectorAll('.app-page')].find(p=>p.style.display==='block');
   if(visible) visible.scrollTop += 50;
 }
@@ -633,12 +667,14 @@ function showToast(msg){
 /* ===== SLIDE-OUT KEYBOARD ===== */
 let kbOpen=false; let activeField=null;
 function toggleKeyboard(){
+  playClickSound();
   kbOpen=!kbOpen;
   document.getElementById('kb-panel').classList.toggle('open',kbOpen);
   document.getElementById('screen-wrap').classList.toggle('slid',kbOpen);
 }
 function setActiveField(el){ activeField=el; }
 function typeKey(k){
+  playClickSound();
   if(!activeField) return;
   if(k==='back'){ activeField.value=activeField.value.slice(0,-1); return; }
   if(k==='sym'){ return; }
@@ -657,8 +693,8 @@ function showDialView(){
   document.getElementById('phone-calling').style.display='none';
   appState.view='dial';
 }
-function dialPress(d){ dialBuffer+=d; document.getElementById('dial-display').innerText=dialBuffer || '\u00A0'; }
-function dialBackspace(){ dialBuffer=dialBuffer.slice(0,-1); document.getElementById('dial-display').innerText=dialBuffer || '\u00A0'; }
+function dialPress(d){ playClickSound(); dialBuffer+=d; document.getElementById('dial-display').innerText=dialBuffer || '\u00A0'; }
+function dialBackspace(){ playClickSound(); dialBuffer=dialBuffer.slice(0,-1); document.getElementById('dial-display').innerText=dialBuffer || '\u00A0'; }
 let callTimerInt;
 function placeCall(){
   if(!dialBuffer){ showToast('Enter a number first'); return; }
@@ -783,7 +819,7 @@ const amzTracks=[
   {title:'Midnight Transit', artist:'Public Domain Sessions', price:'$1.29', chords:[329.63,392.00,440.00,293.66]}
 ];
 let amzBought={};
-let audioCtx=null;
+
 function renderAmazon(){
   document.getElementById('amz-rows').innerHTML=amzTracks.map((t,i)=>
     `<div class="track-row"><div><strong>${t.title}</strong><br><small style="color:#777;">${t.artist}</small></div>
@@ -792,21 +828,34 @@ function renderAmazon(){
         ${amzBought[i] ? '<span class="amz-bought">Purchased</span>' : `<button class="amz-btn" onclick="buyTrack(${i})">${t.price}</button>`}
       </div></div>`).join('');
 }
-function buyTrack(i){ amzBought[i]=true; renderAmazon(); showToast('Downloading over Wi‑Fi…'); }
+function buyTrack(i){ playClickSound(); amzBought[i]=true; renderAmazon(); showToast('Downloading over Wi‑Fi…'); }
+
 function previewTrack(i){
-  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  initAudio(); // Assures context resumes dynamically via a target button interaction
+  if (!audioCtx) return;
+
   const t=amzTracks[i];
   const player=document.getElementById('amz-player');
   player.style.display='block'; player.innerText='▶ Previewing: '+t.title+' — '+t.artist;
   let idx=0;
+  
   const iv=setInterval(()=>{
     if(idx>=t.chords.length){ clearInterval(iv); player.style.display='none'; return; }
-    const osc=audioCtx.createOscillator(); const g=audioCtx.createGain();
-    osc.connect(g); g.connect(audioCtx.destination);
-    osc.frequency.value=t.chords[idx]; osc.type='triangle';
-    g.gain.setValueAtTime(0.08,audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.5);
-    osc.start(); osc.stop(audioCtx.currentTime+0.5);
+    
+    const osc=audioCtx.createOscillator(); 
+    const g=audioCtx.createGain();
+    
+    osc.connect(g); 
+    g.connect(audioCtx.destination);
+    
+    osc.frequency.value=t.chords[idx]; 
+    osc.type='triangle';
+    
+    g.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+0.5);
+    
+    osc.start(); 
+    osc.stop(audioCtx.currentTime+0.5);
     idx++;
   },550);
 }
@@ -829,6 +878,7 @@ function closeViewer(){ showPicGrid(); }
 
 /* ===== CAMERA ===== */
 function takePhoto(){
+  playClickSound();
   const flash=document.getElementById('flash');
   flash.style.transition='none'; flash.style.opacity='1';
   setTimeout(()=>{ flash.style.transition='opacity .3s'; flash.style.opacity='0'; },60);
@@ -845,6 +895,7 @@ function renderAlarms(){
       <input type="checkbox" ${a.on?'checked':''} onchange="alarms[${i}].on=this.checked"></div>`).join('');
 }
 function addAlarm(){
+  playClickSound();
   const t=prompt('Set alarm time (HH:MM)','06:30');
   if(t){ alarms.push({time:t, on:true}); renderAlarms(); }
 }
@@ -852,6 +903,7 @@ function addAlarm(){
 /* ===== MARKET / INSTALL ===== */
 const registry={};
 function installApp(id,icon,label){
+  playClickSound();
   registry[id]={icon,label};
   document.getElementById('m-actions-'+id).innerHTML=`<button class="market-btn uninst" onclick="uninstallApp('${id}')">Uninstall</button>`;
   const grid=document.getElementById('drawer-grid');
@@ -863,6 +915,7 @@ function installApp(id,icon,label){
   showToast(label+' installed');
 }
 function uninstallApp(id){
+  playClickSound();
   const info=registry[id]; delete registry[id];
   document.getElementById('m-actions-'+id).innerHTML=`<button class="market-btn" onclick="installApp('${id}','${info.icon}','${info.label}')">Install</button>`;
   document.getElementById('draw-'+id)?.remove();
@@ -871,7 +924,7 @@ function uninstallApp(id){
 
 /* ===== NOTEPAD ===== */
 let savedNote='';
-function saveNote(){ savedNote=document.getElementById('note-buffer').value; showToast('Note saved'); }
+function saveNote(){ playClickSound(); savedNote=document.getElementById('note-buffer').value; showToast('Note saved'); }
 
 /* ===== PAINT ===== */
 let drawing=false, pCanvas, pCtx;
@@ -883,7 +936,7 @@ function initPaintEngine(){
   pCanvas.onmousemove=e=>{ if(drawing){ pCtx.lineTo(e.offsetX,e.offsetY); pCtx.stroke(); } };
   window.onmouseup=()=>drawing=false;
 }
-function clearCanvas(){ if(pCtx) pCtx.clearRect(0,0,pCanvas.width,pCanvas.height); }
+function clearCanvas(){ playClickSound(); if(pCtx) pCtx.clearRect(0,0,pCanvas.width,pCanvas.height); }
 
 /* ===== SNAKE ===== */
 let snakeInterval, sCanvas, sCtx, snake=[], food={}, dir='RIGHT', score=0;
@@ -894,6 +947,7 @@ function startSnakeGame(){
 }
 function stopSnakeGame(){ clearInterval(snakeInterval); }
 function changeSnakeDir(nd){
+  playClickSound();
   if(nd==='UP'&&dir!=='DOWN') dir='UP';
   if(nd==='DOWN'&&dir!=='UP') dir='DOWN';
   if(nd==='LEFT'&&dir!=='RIGHT') dir='LEFT';
@@ -921,7 +975,7 @@ function renderKiller(){
   document.getElementById('killer-list').innerHTML=running.map(p=>
     `<div class="process-row" style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;"><span>${p}</span><span style="color:#2e8b57;">Running</span></div>`).join('');
 }
-function killAll(){ showToast('Cleared background processes'); document.getElementById('killer-list').querySelectorAll('span:last-child').forEach(s=>{s.innerText='Killed'; s.style.color='#c0392b';}); }
+function killAll(){ playClickSound(); showToast('Cleared background processes'); document.getElementById('killer-list').querySelectorAll('span:last-child').forEach(s=>{s.innerText='Killed'; s.style.color='#c0392b';}); }
 
 /* ===== SETTINGS ===== */
 function switchSettingsPanel(panel){
@@ -937,7 +991,7 @@ function toggleMuteState(){
   document.getElementById('sound-btn').innerText = isMuted ? 'Turn off silent mode' : 'Turn on silent mode';
   showToast(isMuted?'Silent mode on':'Silent mode off');
 }
-function setBg(c){ document.getElementById('home').style.background=c; }
+function setBg(c){ playClickSound(); document.getElementById('home').style.background=c; }
 
 /* notif dots in status bar */
 function updateNotifDots(){
