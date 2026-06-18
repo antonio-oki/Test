@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Android 1.0 Functional Sim</title>
+    <title>Android 1.0 Real Engine</title>
     <style>
-        /* --- CORE PHONE CONTAINER --- */
+        /* --- PHONE HARDWARE FRAME --- */
         body { 
             margin: 0; 
-            background: #1a1a1a; 
+            background: #121212; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
@@ -18,61 +18,61 @@
         }
         #phone { 
             width: 310px; 
-            height: 560px; 
-            background: #2a2a2a; 
+            height: 570px; 
+            background: #252525; 
             position: relative; 
-            border: 4px solid #444; 
+            border: 4px solid #3a3a3a; 
             border-radius: 35px; 
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            box-shadow: 0 0 40px rgba(0,0,0,0.9);
             display: flex;
             flex-direction: column;
         }
         #screen {
             width: 100%;
-            height: 480px;
+            height: 490px;
             background: #000;
             position: relative;
             overflow: hidden;
             border-radius: 30px 30px 0 0;
         }
 
-        /* --- UI ELEMENTS --- */
+        /* --- OS CORE STYLING --- */
         #status-bar { 
             height: 25px; 
             background: #000; 
             color: #fff; 
             font-size: 11px; 
-            padding: 0 15px; 
+            padding: 0 12px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center;
-            border-bottom: 1px solid #222;
-            z-index: 20;
+            border-bottom: 1px solid #1a1a1a;
+            z-index: 100;
             position: relative;
         }
         #desktop { 
-            height: 455px; 
-            background: linear-gradient(to bottom, #004d00, #000); 
+            height: 465px; 
+            background: linear-gradient(to bottom, #054105, #000000); 
             padding: 15px;
             display: flex;
             flex-wrap: wrap;
             align-content: flex-start;
-            gap: 20px;
+            gap: 15px;
             box-sizing: border-box;
         }
 
-        /* --- RETRO APP DRAWER --- */
+        /* --- APP DRAWER --- */
         #drawer { 
             position: absolute; 
             top: 100%; 
             left: 0;
             width: 100%; 
             height: calc(100% - 25px); 
-            background: rgba(15, 15, 15, 0.95); 
-            transition: top 0.3s cubic-bezier(0.1, 0.7, 0.1, 1); 
+            background: rgba(10, 10, 10, 0.96); 
+            transition: top 0.3s cubic-bezier(0, 0.5, 0.3, 1); 
             padding: 20px;
             box-sizing: border-box;
-            z-index: 15;
+            z-index: 50;
         }
         #drawer.open { top: 25px; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
@@ -80,59 +80,59 @@
         .icon { 
             width: 65px; 
             height: 65px; 
-            background: rgba(255,255,255,0.1); 
-            border-radius: 10px; 
+            background: rgba(255,255,255,0.08); 
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px; 
             display: flex; 
             flex-direction: column;
             justify-content: center; 
             align-items: center; 
             font-size: 11px; 
             color: white;
-            border: 1px solid rgba(255,255,255,0.2);
             cursor: pointer;
             text-align: center;
         }
-        .icon:active { background: rgba(255,255,255,0.3); }
+        .icon:active { background: rgba(255,255,255,0.25); }
 
         #handle { 
             position: absolute; 
             bottom: 0; 
             width: 100%; 
             height: 25px; 
-            background: #333; 
+            background: #2a2a2a; 
             color: white; 
             text-align: center; 
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 25px;
-            border-top: 1px solid #444;
-            z-index: 16;
+            border-top: 1px solid #3a3a3a;
+            z-index: 60;
         }
 
-        /* --- PHYSICAL HARDWARE CHIN --- */
+        /* --- NAVIGATION CHIN --- */
         #hardware-chin {
             width: 100%;
             height: 80px;
-            background: #1c1c1c;
+            background: #1a1a1a;
             border-radius: 0 0 35px 35px;
             display: flex;
             justify-content: space-around;
             align-items: center;
-            border-top: 2px solid #333;
+            border-top: 2px solid #2d2d2d;
         }
         .hw-btn {
             background: linear-gradient(to bottom, #444, #222);
             color: white;
             border: 1px solid #555;
-            padding: 10px 15px;
+            padding: 10px 18px;
             font-size: 11px;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
         }
-        .hw-btn:active { background: #111; }
+        .hw-btn:active { background: #000; }
 
-        /* --- OPERATING SYSTEM WINDOW LAYER --- */
+        /* --- OS WINDOW ENVIRONMENT --- */
         #app-window {
             position: absolute;
             top: 25px;
@@ -141,7 +141,7 @@
             height: calc(100% - 25px);
             background: #fff;
             display: none;
-            z-index: 18;
+            z-index: 80;
         }
         .app-page {
             width: 100%;
@@ -149,37 +149,47 @@
             display: none;
             box-sizing: border-box;
             color: #000;
+            position: relative;
         }
 
-        /* --- INDIVIDUAL APP STYLING --- */
-        /* Clock App */
-        .app-sec-clock { text-align: center; padding-top: 80px; background: #000; height: 100%; color: #0f0; font-family: monospace; box-sizing: border-box;}
-        .app-sec-clock h2 { font-size: 32px; margin: 0; }
-        
-        /* Calculator App */
-        .calc-app { padding: 10px; background: #f0f0f0; height: 100%; box-sizing: border-box; }
-        #calc-screen { width: 100%; height: 50px; font-size: 24px; text-align: right; margin-bottom: 10px; padding: 5px; box-sizing: border-box; }
+        /* --- NATIVE APPLICATION DESIGNS --- */
+        /* Maps */
+        .maps-app iframe { width: 100%; height: 100%; border: none; }
+
+        /* Calculator */
+        .calc-app { padding: 12px; background: #e0e0e0; height: 100%; box-sizing: border-box; }
+        #calc-screen { width: 100%; height: 45px; font-size: 24px; text-align: right; margin-bottom: 12px; padding: 5px; box-sizing: border-box; }
         .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-        .calc-grid button { height: 50px; font-size: 18px; cursor: pointer; }
+        .calc-grid button { height: 48px; font-size: 16px; font-weight: bold; cursor: pointer; }
+
+        /* Settings */
+        .settings-app { padding: 15px; background: #fff; }
+        .settings-btn { display: block; width: 100%; margin: 8px 0; padding: 12px; background: #f0f0f0; border: 1px solid #ccc; text-align: left; font-weight: bold; border-radius: 4px; }
+
+        /* Clock */
+        .clock-app { text-align: center; padding-top: 90px; background: #050505; height: 100%; color: #00ff00; font-family: monospace; box-sizing: border-box;}
         
-        /* Settings App */
-        .settings-app { padding: 15px; }
-        .settings-app button { display: block; width: 100%; margin: 10px 0; padding: 10px; cursor: pointer; background: #eee; border: 1px solid #ccc; text-align: left; }
-        
-        /* Browser App */
-        .browser-app { display: flex; flex-direction: column; height: 100%; }
-        .browser-bar { display: flex; background: #ddd; padding: 5px; gap: 5px; }
-        .browser-bar input { flex-grow: 1; padding: 4px; }
-        .browser-body { padding: 20px; text-align: center; background: #fff; flex-grow: 1; }
-        
-        /* Maps App */
-        .maps-app { height: 100%; background: #e5e3df; display: flex; flex-direction: column; }
-        .maps-header { background: #4d79ff; color: white; padding: 8px; font-weight: bold; }
-        .maps-graphic { flex-grow: 1; background: radial-gradient(circle, transparent 20%, #e5e3df 20%), linear-gradient(0deg, #b3c6ff 2px, transparent 2px), linear-gradient(90deg, #b3c6ff 2px, transparent 2px); background-size: 100% 100%, 40px 40px, 40px 40px; position: relative; }
-        
-        /* Market App */
-        .market-app { height: 100%; background: #333; color: white; }
-        .market-header { background: #b50000; padding: 10px; font-weight: bold; font-size: 14px; }
+        /* Market */
+        .market-app { height: 100%; background: #222; color: #fff; display: flex; flex-direction: column; }
+        .market-header { background: #a60000; padding: 12px; font-weight: bold; font-size: 14px; }
+        .market-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #333; }
+        .market-btn { background: #0088cc; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;}
+        .market-btn.installed { background: #444; cursor: default; }
+
+        /* Web Browser Simulation */
+        .browser-app { display: flex; flex-direction: column; height: 100%; background: #fff; }
+        .browser-bar { display: flex; background: #cfcfcf; padding: 6px; gap: 4px; border-bottom: 1px solid #aaa; }
+        .browser-bar input { flex-grow: 1; padding: 5px; font-size: 12px; }
+        .browser-bar button { padding: 5px 10px; font-weight: bold; }
+        .browser-viewport { padding: 15px; flex-grow: 1; overflow-y: auto; font-size: 14px; }
+
+        /* Notes App (Downloadable) */
+        .notes-app { padding: 12px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
+        .notes-app textarea { flex-grow: 1; width: 100%; resize: none; margin-bottom: 8px; padding: 8px; box-sizing: border-box; }
+
+        /* Doodle Paint App (Downloadable) */
+        .paint-app { height: 100%; display: flex; flex-direction: column; background: #fff; }
+        #paintCanvas { flex-grow: 1; background: #fff; width: 100%; height: 80%; border-bottom: 1px solid #ccc; cursor: crosshair; }
     </style>
 </head>
 <body>
@@ -188,7 +198,7 @@
     <div id="screen">
         <div id="status-bar">
             <span id="time">12:00 AM</span>
-            <span class="status-right">3G █ 100%</span>
+            <span>3G █ 100%</span>
         </div>
         
         <div id="desktop">
@@ -198,7 +208,7 @@
         </div>
         
         <div id="drawer">
-            <div class="grid">
+            <div class="grid" id="drawer-grid">
                 <div class="icon" onclick="openApp('browser')">🌐<br>Browser</div>
                 <div class="icon" onclick="openApp('maps')">🗺️<br>Maps</div>
                 <div class="icon" onclick="openApp('market')">🛍️<br>Market</div>
@@ -211,11 +221,9 @@
         <div id="handle" onclick="toggleDrawer()">▲ Menu</div>
 
         <div id="app-window">
-            <div id="app-clock" class="app-page">
-                <div class="app-sec-clock">
-                    <h2 id="big-time">00:00:00 PM</h2>
-                    <p style="color:#aaa;">Android 1.0 Desk Clock</p>
-                </div>
+            
+            <div id="app-maps" class="app-page maps-app">
+                <iframe src="https://www.openstreetmap.org/export/embed.html?bbox=-122.09,37.41,-122.07,37.43&layer=mapnik&marker=37.422,-122.084"></iframe>
             </div>
 
             <div id="app-calculator" class="app-page">
@@ -230,47 +238,58 @@
                 </div>
             </div>
 
-            <div id="app-settings" class="app-page">
-                <div class="settings-app">
-                    <h3>Settings</h3>
-                    <hr>
-                    <p>Select Desktop Wallpaper:</p>
-                    <button onclick="setBg('#004d00')">Retro Classic Green</button>
-                    <button onclick="setBg('#001a4d')">Deep Blue Ocean</button>
-                    <button onclick="setBg('#222222')">T-Mobile Slate Dark</button>
+            <div id="app-settings" class="app-page settings-app">
+                <h3>Settings</h3>
+                <hr>
+                <p>System Wallpaper UI Matrix:</p>
+                <button class="settings-btn" onclick="setBg('#054105')">Retro Dark Forest Green</button>
+                <button class="settings-btn" onclick="setBg('#0a2452')">Deep Space Blue</button>
+                <button class="settings-btn" onclick="setBg('#222222')">T-Mobile Flat Charcoal</button>
+            </div>
+
+            <div id="app-clock" class="app-page clock-app">
+                <h2 id="big-time" style="font-size:32px; margin:0;">00:00:00 PM</h2>
+                <p style="color:#777;">Android 1.0 Desk Clock Sub-System</p>
+            </div>
+
+            <div id="app-market" class="app-page market-app">
+                <div class="market-header">Android Market (2008 Pack)</div>
+                <div class="market-item">
+                    <div><strong>Notes Notepad</strong><br><small style="color:#aaa;">Write & save text logs</small></div>
+                    <button class="market-btn" id="btn-install-notes" onclick="installApp('notes', '📝', 'Notes')">Install</button>
+                </div>
+                <div class="market-item">
+                    <div><strong>Doodle Paint Canvas</strong><br><small style="color:#aaa;">Finger painting touch tool</small></div>
+                    <button class="market-btn" id="btn-install-paint" onclick="installApp('paint', '🎨', 'Paint')">Install</button>
                 </div>
             </div>
 
-            <div id="app-browser" class="app-page">
-                <div class="browser-app">
-                    <div class="browser-bar">
-                        <input type="text" id="url-bar" value="https://google.com">
-                        <button onclick="alert('Connecting via 2008 GPRS Network...')">Go</button>
-                    </div>
-                    <div class="browser-body">
-                        <h4>Google (2008 Archive)</h4>
-                        <input type="text" placeholder="Search the web..."><br><br>
-                        <button onclick="alert('Searching...')">Google Search</button>
-                    </div>
+            <div id="app-browser" class="app-page browser-app">
+                <div class="browser-bar">
+                    <input type="text" id="url-bar" value="google.com">
+                    <button onclick="browseSubmit()">Go</button>
+                </div>
+                <div id="browser-view" class="browser-viewport">
+                    <h2>Google</h2>
+                    <input type="text" id="search-input" style="width:80%;" placeholder="Search the 2008 Web..."><br><br>
+                    <button onclick="browseSearch()">Google Search</button>
                 </div>
             </div>
 
-            <div id="app-maps" class="app-page">
-                <div class="maps-app">
-                    <div class="maps-header">Google Maps Lite</div>
-                    <div class="maps-graphic">
-                        <div style="position:absolute; top:40%; left:45%; font-size: 20px;">📍</div>
-                    </div>
-                    <p style="font-size:11px; margin:5px; color: #333;">Lat: 37.4220° N, Lon: 122.0841° W (Googleplex)</p>
-                </div>
+            <div id="app-notes" class="app-page notes-app">
+                <h3>Notepad Log</h3>
+                <textarea id="note-buffer" placeholder="Type data nodes here..."></textarea>
+                <button class="settings-btn" style="text-align:center;" onclick="saveNote()">Save to Flash Memory</button>
             </div>
 
-            <div id="app-market" class="app-page">
-                <div class="market-app">
-                    <div class="market-header">Android Market (v1.0)</div>
-                    <p style="padding:15px; font-size:12px; color:#ccc;">Welcome to the Android Market! All applications are currently up to date.</p>
+            <div id="app-paint" class="app-page paint-app">
+                <div style="background:#eee; padding:5px; display:flex; justify-content:space-between;">
+                    <strong>Doodle Paint Canvas</strong>
+                    <button onclick="clearCanvas()">Clear</button>
                 </div>
+                <canvas id="paintCanvas"></canvas>
             </div>
+
         </div>
     </div>
 
@@ -281,76 +300,141 @@
 </div>
 
 <script>
-    // System Clock (12-Hour Engine)
+    // System Clock Runtime (12-Hour Sync Mechanism)
     function updateTime() {
         const now = new Date();
         let hours = now.getHours();
         const minutes = now.getMinutes().toString().padStart(2, '0');
         const seconds = now.getSeconds().toString().padStart(2, '0');
         const ampm = hours >= 12 ? 'PM' : 'AM';
-        
         hours = hours % 12 || 12; 
         
-        const modernTime = hours + ":" + minutes + " " + ampm;
-        document.getElementById('time').innerText = modernTime;
-        
-        // Feed the Clock app view safely if it exists
-        const bigClock = document.getElementById('big-time');
-        if (bigClock) {
-            bigClock.innerText = hours + ":" + minutes + ":" + seconds + " " + ampm;
+        document.getElementById('time').innerText = hours + ":" + minutes + " " + ampm;
+        if(document.getElementById('big-time')) {
+            document.getElementById('big-time').innerText = hours + ":" + minutes + ":" + seconds + " " + ampm;
         }
     }
     setInterval(updateTime, 1000);
     updateTime();
 
-    // App Drawer Slider Logic
+    // App Drawer Animation Toggle
     function toggleDrawer() {
-        const drawer = document.getElementById('drawer');
-        drawer.classList.toggle('open');
-        document.getElementById('handle').innerText = drawer.classList.contains('open') ? '▼ Close' : '▲ Menu';
+        const drw = document.getElementById('drawer');
+        drw.classList.toggle('open');
+        document.getElementById('handle').innerText = drw.classList.contains('open') ? '▼ Close' : '▲ Menu';
     }
 
-    // Bulletproof Window Switching Manager
+    // Master Display Router System
     function openApp(appId) {
-        // Hide all app layout divisions safely
-        const pages = document.querySelectorAll('.app-page');
-        pages.forEach(page => page.style.display = 'none');
-        
-        // Fire up the target environment container layers
+        document.querySelectorAll('.app-page').forEach(p => p.style.display = 'none');
         document.getElementById('app-window').style.display = "block";
         document.getElementById('app-' + appId).style.display = "block";
         
-        // Auto pull down menu slider layout frame
         document.getElementById('drawer').classList.remove('open');
         document.getElementById('handle').innerText = '▲ Menu';
+        
+        if(appId === 'paint') initPaintEngine();
+        if(appId === 'notes') loadNote();
     }
 
-    // Hardware Exit Button Command
     function goHome() {
         document.getElementById('app-window').style.display = "none";
     }
 
-    // Calculator Core Processing Logic
-    function calcPress(val) {
-        const scr = document.getElementById('calc-screen');
-        if(scr.value === '0' || scr.value === 'Error') scr.value = val;
-        else scr.value += val;
+    // Calculator Core Mathematical Processor
+    function calcPress(v) {
+        const s = document.getElementById('calc-screen');
+        if(s.value === '0' || s.value === 'Error') s.value = v; else s.value += v;
     }
-    function calcClear() { 
-        document.getElementById('calc-screen').value = '0'; 
-    }
+    function calcClear() { document.getElementById('calc-screen').value = '0'; }
     function calcEval() {
-        const scr = document.getElementById('calc-screen');
-        try { 
-            scr.value = Function('"use strict";return (' + scr.value + ')')(); 
-        } catch { 
-            scr.value = "Error"; 
-        }
+        const s = document.getElementById('calc-screen');
+        try { s.value = Function('"use strict";return (' + s.value + ')')(); } catch { s.value = "Error"; }
     }
 
-    // Wallpaper Mod Command Engine
-    function setBg(color) {
-        document.getElementById('desktop').style.background = 'linear-gradient(to bottom, ' + color + ', #000)';
+    // Dynamic Display Customization Control Engine
+    function setBg(c) {
+        document.getElementById('desktop').style.background = 'linear-gradient(to bottom, ' + c + ', #000)';
+    }
+
+    // Simulated Web Browser Application Processing Loop
+    function browseSubmit() {
+        const val = document.getElementById('url-bar').value.toLowerCase();
+        const view = document.getElementById('browser-view');
+        if(val.includes('google')) {
+            view.innerHTML = `<h2>Google</h2><input type="text" id="search-input" style="width:80%;" placeholder="Search the 2008 Web..."><br><br><button onclick="browseSearch()">Google Search</button>`;
+        } else {
+            view.innerHTML = `<h3>Simulation Error</h3><p>HTTP 404: Web host tracking protocols blocked via sandboxed network architecture restrictions.</p>`;
+        }
+    }
+    function browseSearch() {
+        const query = document.getElementById('search-input').value;
+        document.getElementById('browser-view').innerHTML = `
+            <h4>Search results for: "${query}"</h4>
+            <hr>
+            <p><strong>1. Android 1.0 Launch Updates</strong><br>T-Mobile announces G1 cellular unit availability coming late 2008...</p>
+            <p><strong>2. MySpace layout generators</strong><br>Customize your HTML profiling structures completely free...</p>
+            <button onclick="browseSubmit()">Back to home</button>
+        `;
+    }
+
+    // Android Market Deployment Compilation Engine
+    const installedRegistry = {};
+    function installApp(id, icon, label) {
+        if (installedRegistry[id]) return;
+        installedRegistry[id] = true;
+
+        // Visual feedback inside the app store
+        const btn = document.getElementById('btn-install-' + id);
+        btn.innerText = "Installed";
+        btn.classList.add('installed');
+        btn.disabled = true;
+
+        // Generate Node Shortcut for Desktop
+        const deskShortcut = document.createElement('div');
+        deskShortcut.className = "icon";
+        deskShortcut.innerHTML = `${icon}<br>${label}`;
+        deskShortcut.onclick = () => openApp(id);
+        document.getElementById('desktop').appendChild(deskShortcut);
+
+        // Generate Node System Entry for sliding drawer matrix
+        const drawerShortcut = document.createElement('div');
+        drawerShortcut.className = "icon";
+        drawerShortcut.innerHTML = `${icon}<br>${label}`;
+        drawerShortcut.onclick = () => openApp(id);
+        document.getElementById('drawer-grid').appendChild(drawerShortcut);
+    }
+
+    // Persistent Memory Logs (Notes Application Runtime)
+    function saveNote() {
+        const text = document.getElementById('note-buffer').value;
+        localStorage.setItem('android_note_data', text);
+        alert('Data sector write tracking operation completed.');
+    }
+    function loadNote() {
+        const saved = localStorage.getItem('android_note_data');
+        if(saved) document.getElementById('note-buffer').value = saved;
+    }
+
+    // Canvas Graphics Logic Vector Processing Engine (Doodle Paint)
+    let paintActive = false;
+    let canvas, ctx;
+    function initPaintEngine() {
+        canvas = document.getElementById('paintCanvas');
+        ctx = canvas.getContext('2d');
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight - 40;
+        
+        ctx.strokeStyle = "#ff0000";
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+
+        canvas.onmousedown = (e) => { paintActive = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
+        canvas.onmousemove = (e) => { if(paintActive) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
+        window.onmouseup = () => { paintActive = false; };
+    }
+    function clearCanvas() {
+        if(ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 </script>
 
