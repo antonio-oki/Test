@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Android 1.0 Real Engine</title>
+    <title>Android 1.0 Advanced Engine</title>
     <style>
         /* --- PHONE HARDWARE FRAME --- */
         body { 
@@ -18,7 +18,7 @@
         }
         #phone { 
             width: 310px; 
-            height: 570px; 
+            height: 580px; 
             background: #252525; 
             position: relative; 
             border: 4px solid #3a3a3a; 
@@ -29,11 +29,21 @@
         }
         #screen {
             width: 100%;
-            height: 490px;
+            height: 500px;
             background: #000;
             position: relative;
             overflow: hidden;
             border-radius: 30px 30px 0 0;
+        }
+
+        /* --- BRIGHTNESS DRIVER LAYER --- */
+        #brightness-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: black;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 999;
         }
 
         /* --- OS CORE STYLING --- */
@@ -51,7 +61,7 @@
             position: relative;
         }
         #desktop { 
-            height: 465px; 
+            height: 475px; 
             background: linear-gradient(to bottom, #054105, #000000); 
             padding: 15px;
             display: flex;
@@ -68,7 +78,7 @@
             left: 0;
             width: 100%; 
             height: calc(100% - 25px); 
-            background: rgba(10, 10, 10, 0.96); 
+            background: rgba(10, 10, 10, 0.97); 
             transition: top 0.3s cubic-bezier(0, 0.5, 0.3, 1); 
             padding: 20px;
             box-sizing: border-box;
@@ -150,9 +160,24 @@
             box-sizing: border-box;
             color: #000;
             position: relative;
+            background: #fff;
+            overflow-y: auto;
         }
 
-        /* --- NATIVE APPLICATION DESIGNS --- */
+        /* --- APPLICATION SPECIFIC INTERFACES --- */
+        /* Universal Settings Refactor */
+        .settings-header { background: #444; color: white; padding: 12px; font-weight: bold; }
+        .settings-row { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; align-items: center;}
+        .settings-row:active { background: #f5f5f5; }
+        .settings-panel { display: none; height: 100%; background: white; }
+        .back-settings { background: #666; color: white; border: none; padding: 5px 10px; margin: 10px; cursor: pointer; font-size: 12px; border-radius: 4px; }
+
+        /* Market */
+        .market-header { background: #a60000; color: white; padding: 12px; font-weight: bold; font-size: 14px; }
+        .market-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; color: #333; }
+        .market-btn { background: #0088cc; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;}
+        .market-btn.uninst { background: #cc0000; }
+
         /* Maps */
         .maps-app iframe { width: 100%; height: 100%; border: none; }
 
@@ -162,43 +187,43 @@
         .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
         .calc-grid button { height: 48px; font-size: 16px; font-weight: bold; cursor: pointer; }
 
-        /* Settings */
-        .settings-app { padding: 15px; background: #fff; }
-        .settings-btn { display: block; width: 100%; margin: 8px 0; padding: 12px; background: #f0f0f0; border: 1px solid #ccc; text-align: left; font-weight: bold; border-radius: 4px; }
-
         /* Clock */
         .clock-app { text-align: center; padding-top: 90px; background: #050505; height: 100%; color: #00ff00; font-family: monospace; box-sizing: border-box;}
-        
-        /* Market */
-        .market-app { height: 100%; background: #222; color: #fff; display: flex; flex-direction: column; }
-        .market-header { background: #a60000; padding: 12px; font-weight: bold; font-size: 14px; }
-        .market-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #333; }
-        .market-btn { background: #0088cc; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;}
-        .market-btn.installed { background: #444; cursor: default; }
 
-        /* Web Browser Simulation */
+        /* Web Browser */
         .browser-app { display: flex; flex-direction: column; height: 100%; background: #fff; }
         .browser-bar { display: flex; background: #cfcfcf; padding: 6px; gap: 4px; border-bottom: 1px solid #aaa; }
         .browser-bar input { flex-grow: 1; padding: 5px; font-size: 12px; }
-        .browser-bar button { padding: 5px 10px; font-weight: bold; }
         .browser-viewport { padding: 15px; flex-grow: 1; overflow-y: auto; font-size: 14px; }
 
-        /* Notes App (Downloadable) */
+        /* Notes App */
         .notes-app { padding: 12px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
         .notes-app textarea { flex-grow: 1; width: 100%; resize: none; margin-bottom: 8px; padding: 8px; box-sizing: border-box; }
 
-        /* Doodle Paint App (Downloadable) */
+        /* Doodle Paint App */
         .paint-app { height: 100%; display: flex; flex-direction: column; background: #fff; }
         #paintCanvas { flex-grow: 1; background: #fff; width: 100%; height: 80%; border-bottom: 1px solid #ccc; cursor: crosshair; }
+
+        /* Snake Game Layout */
+        .snake-app { background: #111; height: 100%; color: white; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+        #snakeCanvas { background: #000; border: 2px solid #333; margin-top: 10px; }
+        .dpad { display: grid; grid-template-columns: repeat(3, 1fr); width: 120px; gap: 5px; margin-top: 10px; }
+        .dpad button { background: #444; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; font-size: 16px; }
+
+        /* Task Killer */
+        .killer-app { padding: 15px; background: #fff; color: #000; }
+        .process-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
     </style>
 </head>
 <body>
 
 <div id="phone">
     <div id="screen">
+        <div id="brightness-overlay"></div>
+
         <div id="status-bar">
             <span id="time">12:00 AM</span>
-            <span>3G █ 100%</span>
+            <span id="sound-indicator">🔊 3G █ 100%</span>
         </div>
         
         <div id="desktop">
@@ -233,41 +258,99 @@
                         <button onclick="calcPress('7')">7</button><button onclick="calcPress('8')">8</button><button onclick="calcPress('9')">9</button><button onclick="calcPress('/')">/</button>
                         <button onclick="calcPress('4')">4</button><button onclick="calcPress('5')">5</button><button onclick="calcPress('6')">6</button><button onclick="calcPress('*')">*</button>
                         <button onclick="calcPress('1')">1</button><button onclick="calcPress('2')">2</button><button onclick="calcPress('3')">3</button><button onclick="calcPress('-')">-</button>
-                        <button onclick="calcClear()">C</button><button onclick="calcPress('0')">0</button><button onclick="calcEval()">=</button><button onclick="calcPress('+')">+</button>
+                        <button onclick="calcClear()">C</button><button onclick="calcPress('0')">0</button><button onclick="calcEval('=')">=</button><button onclick="calcPress('+')">+</button>
                     </div>
                 </div>
             </div>
 
-            <div id="app-settings" class="app-page settings-app">
-                <h3>Settings</h3>
-                <hr>
-                <p>System Wallpaper UI Matrix:</p>
-                <button class="settings-btn" onclick="setBg('#054105')">Retro Dark Forest Green</button>
-                <button class="settings-btn" onclick="setBg('#0a2452')">Deep Space Blue</button>
-                <button class="settings-btn" onclick="setBg('#222222')">T-Mobile Flat Charcoal</button>
+            <div id="app-settings" class="app-page">
+                <div id="settings-main-page">
+                    <div class="settings-header">Settings</div>
+                    <div class="settings-row" onclick="switchSettingsPanel('display')"><div>📱 Display Wallpaper</div><span>&gt;</span></div>
+                    <div class="settings-row" onclick="switchSettingsPanel('brightness')"><div>☀️ Screen Brightness</div><span>&gt;</span></div>
+                    <div class="settings-row" onclick="switchSettingsPanel('sound')"><div>🔊 Volume & Alerts</div><span>&gt;</span></div>
+                    <div class="settings-row" onclick="switchSettingsPanel('about')"><div>ℹ️ About Android Emulator</div><span>&gt;</span></div>
+                </div>
+
+                <div id="settings-display" class="settings-panel">
+                    <button class="back-settings" onclick="switchSettingsPanel('main')">&lt; Back</button>
+                    <div style="padding:15px;">
+                        <h4>Choose Desktop Wall:</h4>
+                        <button style="width:100%; padding:10px; margin-bottom:8px;" onclick="setBg('#054105')">Classic Green</button>
+                        <button style="width:100%; padding:10px; margin-bottom:8px;" onclick="setBg('#0a2452')">Cosmos Blue</button>
+                        <button style="width:100%; padding:10px; margin-bottom:8px;" onclick="setBg('#222')">Charcoal Dark</button>
+                    </div>
+                </div>
+
+                <div id="settings-brightness" class="settings-panel">
+                    <button class="back-settings" onclick="switchSettingsPanel('main')">&lt; Back</button>
+                    <div style="padding:15px;">
+                        <h4>Hardware Lighting Matrix:</h4>
+                        <input type="range" min="10" max="100" value="100" style="width:100%;" oninput="adjustBrightness(this.value)">
+                        <p style="font-size:12px; color:#666;">Simulates backlit power consumption optimization values.</p>
+                    </div>
+                </div>
+
+                <div id="settings-sound" class="settings-panel">
+                    <button class="back-settings" onclick="switchSettingsPanel('main')">&lt; Back</button>
+                    <div style="padding:15px;">
+                        <h4>Sound Matrix:</h4>
+                        <button style="width:100%; padding:12px; margin-bottom:10px;" id="sound-btn" onclick="toggleMuteState()">Toggle Silent Mode</button>
+                    </div>
+                </div>
+
+                <div id="settings-about" class="settings-panel">
+                    <button class="back-settings" onclick="switchSettingsPanel('main')">&lt; Back</button>
+                    <div style="padding:15px; font-size:13px; line-height:1.6;">
+                        <strong>Model:</strong> T-Mobile G1 (HTC Dream)<br>
+                        <strong>Firmware Base:</strong> Android 1.0 Astro<br>
+                        <strong>Baseband:</strong> TC-OS-2026-v1.4<br>
+                        <strong>Kernel:</strong> Linux v2.6.25-android-g1
+                    </div>
+                </div>
             </div>
 
             <div id="app-clock" class="app-page clock-app">
                 <h2 id="big-time" style="font-size:32px; margin:0;">00:00:00 PM</h2>
-                <p style="color:#777;">Android 1.0 Desk Clock Sub-System</p>
+                <p style="color:#777;">Android v1.0 Desk Clock Sub-System</p>
             </div>
 
-            <div id="app-market" class="app-page market-app">
-                <div class="market-header">Android Market (2008 Pack)</div>
+            <div id="app-market" class="app-page" style="background:#fff;">
+                <div class="market-header">Android Market (2008 Repository)</div>
+                
                 <div class="market-item">
-                    <div><strong>Notes Notepad</strong><br><small style="color:#aaa;">Write & save text logs</small></div>
-                    <button class="market-btn" id="btn-install-notes" onclick="installApp('notes', '📝', 'Notes')">Install</button>
+                    <div><strong>Notes Notepad</strong><br><small style="color:#777;">Persistent local string registry data tool</small></div>
+                    <div id="m-actions-notes">
+                        <button class="market-btn" onclick="installApp('notes', '📝', 'Notes')">Install</button>
+                    </div>
                 </div>
+                
                 <div class="market-item">
-                    <div><strong>Doodle Paint Canvas</strong><br><small style="color:#aaa;">Finger painting touch tool</small></div>
-                    <button class="market-btn" id="btn-install-paint" onclick="installApp('paint', '🎨', 'Paint')">Install</button>
+                    <div><strong>Doodle Paint</strong><br><small style="color:#777;">Finger tracking canvas array rendering utility</small></div>
+                    <div id="m-actions-paint">
+                        <button class="market-btn" onclick="installApp('paint', '🎨', 'Paint')">Install</button>
+                    </div>
+                </div>
+
+                <div class="market-item">
+                    <div><strong>Retro Snake Game</strong><br><small style="color:#777;">Classic structural algorithmic arcade game</small></div>
+                    <div id="m-actions-snake">
+                        <button class="market-btn" onclick="installApp('snake', '🐍', 'Snake')">Install</button>
+                    </div>
+                </div>
+
+                <div class="market-item">
+                    <div><strong>Memory Task Killer</strong><br><small style="color:#777;">2008 Vintage application instance lifecycle tool</small></div>
+                    <div id="m-actions-killer">
+                        <button class="market-btn" onclick="installApp('killer', '🚫', 'Task Killer')">Install</button>
+                    </div>
                 </div>
             </div>
 
             <div id="app-browser" class="app-page browser-app">
                 <div class="browser-bar">
-                    <input type="text" id="url-bar" value="google.com">
-                    <button onclick="browseSubmit()">Go</button>
+                    <input type="text" id="url-bar" value="google.com" readonly>
+                    <button onclick="alert('Google server pipeline synced.')">Go</button>
                 </div>
                 <div id="browser-view" class="browser-viewport">
                     <h2>Google</h2>
@@ -277,17 +360,38 @@
             </div>
 
             <div id="app-notes" class="app-page notes-app">
-                <h3>Notepad Log</h3>
-                <textarea id="note-buffer" placeholder="Type data nodes here..."></textarea>
-                <button class="settings-btn" style="text-align:center;" onclick="saveNote()">Save to Flash Memory</button>
+                <h3>Notepad Log Buffer</h3>
+                <textarea id="note-buffer" placeholder="Type text payload data logs here..."></textarea>
+                <button style="width:100%; padding:10px; font-weight:bold; cursor:pointer;" onclick="saveNote()">Save to Local Storage</button>
             </div>
 
             <div id="app-paint" class="app-page paint-app">
-                <div style="background:#eee; padding:5px; display:flex; justify-content:space-between;">
-                    <strong>Doodle Paint Canvas</strong>
-                    <button onclick="clearCanvas()">Clear</button>
+                <div style="background:#eee; padding:5px; display:flex; justify-content:space-between; align-items:center;">
+                    <strong>Doodle Canvas</strong>
+                    <button onclick="clearCanvas()">Wipe</button>
                 </div>
                 <canvas id="paintCanvas"></canvas>
+            </div>
+
+            <div id="app-snake" class="app-page snake-app">
+                <canvas id="snakeCanvas" width="200" height="200"></canvas>
+                <div class="dpad">
+                    <div></div><button onclick="changeSnakeDir('UP')">▲</button><div></div>
+                    <button onclick="changeSnakeDir('LEFT')">◀</button><div style="text-align:center; line-height:35px; font-size:10px;">D-PAD</div><button onclick="changeSnakeDir('RIGHT')">▶</button>
+                    <div></div><button onclick="changeSnakeDir('DOWN')">▼</button><div></div>
+                </div>
+                <div id="snake-score" style="margin-top:10px; font-family:monospace;">Score: 0</div>
+            </div>
+
+            <div id="app-killer" class="app-page killer-app">
+                <h3>Advanced Task Manager</h3>
+                <hr>
+                <div class="process-row"><span>system_server (Kernel Core)</span><span style="color:green;">Protected</span></div>
+                <div class="process-row"><span>com.android.maps (Map Display)</span><span style="color:#666;">Active</span></div>
+                <div class="process-row"><span>com.android.browser (WebKit)</span><span style="color:#666;">Idle</span></div>
+                <div class="process-row"><span>com.android.market (App Engine)</span><span style="color:#666;">Active</span></div>
+                <br>
+                <button style="width:100%; padding:12px; font-weight:bold; background:#cc0000; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="killProcesses()">Kill Background Cache</button>
             </div>
 
         </div>
@@ -300,7 +404,7 @@
 </div>
 
 <script>
-    // System Clock Runtime (12-Hour Sync Mechanism)
+    // --- BASIC LIFE RUNTIME HARDWARE CLOCK SYNCHRONIZATION ---
     function updateTime() {
         const now = new Date();
         let hours = now.getHours();
@@ -317,14 +421,14 @@
     setInterval(updateTime, 1000);
     updateTime();
 
-    // App Drawer Animation Toggle
+    // --- DRAWER ANIMATION CONTROLLERS ---
     function toggleDrawer() {
         const drw = document.getElementById('drawer');
         drw.classList.toggle('open');
         document.getElementById('handle').innerText = drw.classList.contains('open') ? '▼ Close' : '▲ Menu';
     }
 
-    // Master Display Router System
+    // --- APPLICATION ROUTING SWITCH INTERFACE ENGINE ---
     function openApp(appId) {
         document.querySelectorAll('.app-page').forEach(p => p.style.display = 'none');
         document.getElementById('app-window').style.display = "block";
@@ -335,13 +439,37 @@
         
         if(appId === 'paint') initPaintEngine();
         if(appId === 'notes') loadNote();
+        if(appId === 'snake') startSnakeGame();
     }
 
     function goHome() {
         document.getElementById('app-window').style.display = "none";
+        stopSnakeGame();
     }
 
-    // Calculator Core Mathematical Processor
+    // --- SETTINGS APPLICATION NESTED DIRECTORY ENGINE ---
+    function switchSettingsPanel(panelId) {
+        document.getElementById('settings-main-page').style.display = (panelId === 'main') ? 'block' : 'none';
+        document.querySelectorAll('.settings-panel').forEach(p => p.style.display = 'none');
+        if(panelId !== 'main') {
+            document.getElementById('settings-' + panelId).style.display = 'block';
+        }
+    }
+    function adjustBrightness(val) {
+        // Manipulates custom black transparency mask matrix layout values
+        document.getElementById('brightness-overlay').style.opacity = (100 - val) / 100;
+    }
+    let isMuted = false;
+    function toggleMuteState() {
+        isMuted = !isMuted;
+        document.getElementById('sound-indicator').innerText = isMuted ? '🔇 3G █ 100%' : '🔊 3G █ 100%';
+        document.getElementById('sound-btn').innerText = isMuted ? "Activate Alert Streams" : "Toggle Silent Mode";
+    }
+    function setBg(color) {
+        document.getElementById('desktop').style.background = 'linear-gradient(to bottom, ' + color + ', #000)';
+    }
+
+    // --- CALCULATOR ENGINE ---
     function calcPress(v) {
         const s = document.getElementById('calc-screen');
         if(s.value === '0' || s.value === 'Error') s.value = v; else s.value += v;
@@ -352,89 +480,124 @@
         try { s.value = Function('"use strict";return (' + s.value + ')')(); } catch { s.value = "Error"; }
     }
 
-    // Dynamic Display Customization Control Engine
-    function setBg(c) {
-        document.getElementById('desktop').style.background = 'linear-gradient(to bottom, ' + c + ', #000)';
-    }
-
-    // Simulated Web Browser Application Processing Loop
-    function browseSubmit() {
-        const val = document.getElementById('url-bar').value.toLowerCase();
-        const view = document.getElementById('browser-view');
-        if(val.includes('google')) {
-            view.innerHTML = `<h2>Google</h2><input type="text" id="search-input" style="width:80%;" placeholder="Search the 2008 Web..."><br><br><button onclick="browseSearch()">Google Search</button>`;
-        } else {
-            view.innerHTML = `<h3>Simulation Error</h3><p>HTTP 404: Web host tracking protocols blocked via sandboxed network architecture restrictions.</p>`;
-        }
-    }
+    // --- SIMULATED WEB BROWSER INTERFACE ---
     function browseSearch() {
-        const query = document.getElementById('search-input').value;
+        const q = document.getElementById('search-input').value;
         document.getElementById('browser-view').innerHTML = `
-            <h4>Search results for: "${query}"</h4>
-            <hr>
-            <p><strong>1. Android 1.0 Launch Updates</strong><br>T-Mobile announces G1 cellular unit availability coming late 2008...</p>
-            <p><strong>2. MySpace layout generators</strong><br>Customize your HTML profiling structures completely free...</p>
-            <button onclick="browseSubmit()">Back to home</button>
+            <h4>Results for: "${q}"</h4><hr>
+            <p><strong>1. Android Market Expands</strong><br>Developers are launching custom logic compilation frameworks for G1 devices.</p>
+            <p><strong>2. Snake Retro Classic Patch</strong><br>Play absolute grid-rendered calculations directly inside your system wrapper layer.</p>
+            <button onclick="document.getElementById('app-browser').innerHTML = document.getElementById('app-browser').innerHTML">Reset Browser</button>
         `;
     }
 
-    // Android Market Deployment Compilation Engine
-    const installedRegistry = {};
+    // --- ADVANCED PACKAGING COMPILATION: INSTALL / UNINSTALL MANAGER ---
+    const activeRegistry = {};
     function installApp(id, icon, label) {
-        if (installedRegistry[id]) return;
-        installedRegistry[id] = true;
+        activeRegistry[id] = { icon: icon, label: label };
 
-        // Visual feedback inside the app store
-        const btn = document.getElementById('btn-install-' + id);
-        btn.innerText = "Installed";
-        btn.classList.add('installed');
-        btn.disabled = true;
+        // Mutates Market Interface Action Matrix state profiles
+        document.getElementById('m-actions-' + id).innerHTML = `<button class="market-btn uninst" onclick="uninstallApp('${id}')">Uninstall</button>`;
 
-        // Generate Node Shortcut for Desktop
-        const deskShortcut = document.createElement('div');
-        deskShortcut.className = "icon";
-        deskShortcut.innerHTML = `${icon}<br>${label}`;
-        deskShortcut.onclick = () => openApp(id);
-        document.getElementById('desktop').appendChild(deskShortcut);
+        // Append Node structures to active desktop environment layer
+        const dIcon = document.createElement('div');
+        dIcon.className = "icon";
+        dIcon.id = "desk-shortcut-" + id;
+        dIcon.innerHTML = `${icon}<br>${label}`;
+        dIcon.onclick = () => openApp(id);
+        document.getElementById('desktop').appendChild(dIcon);
 
-        // Generate Node System Entry for sliding drawer matrix
-        const drawerShortcut = document.createElement('div');
-        drawerShortcut.className = "icon";
-        drawerShortcut.innerHTML = `${icon}<br>${label}`;
-        drawerShortcut.onclick = () => openApp(id);
-        document.getElementById('drawer-grid').appendChild(drawerShortcut);
+        // Append Node structures to application sliding drawer system matrix
+        const drIcon = document.createElement('div');
+        drIcon.className = "icon";
+        drIcon.id = "draw-shortcut-" + id;
+        drIcon.innerHTML = `${icon}<br>${label}`;
+        drIcon.onclick = () => openApp(id);
+        document.getElementById('drawer-grid').appendChild(drIcon);
     }
 
-    // Persistent Memory Logs (Notes Application Runtime)
+    function uninstallApp(id) {
+        // Extract structural pointer targets completely out of memory registry arrays
+        const appInfo = activeRegistry[id];
+        delete activeRegistry[id];
+
+        // Revert UI configuration profiles back inside Market framework layers
+        document.getElementById('m-actions-' + id).innerHTML = `<button class="market-btn" onclick="installApp('${id}', '${appInfo.icon}', '${appInfo.label}')">Install</button>`;
+
+        // Vaporize target element nodes off active DOM array layer tracking trees
+        document.getElementById("desk-shortcut-" + id)?.remove();
+        document.getElementById("draw-shortcut-" + id)?.remove();
+
+        // Safety context drop to exit active deleted frame loop environments
+        goHome();
+    }
+
+    // --- NOTES RUNTIME MECHANISM ---
     function saveNote() {
-        const text = document.getElementById('note-buffer').value;
-        localStorage.setItem('android_note_data', text);
-        alert('Data sector write tracking operation completed.');
+        localStorage.setItem('g1_sim_note', document.getElementById('note-buffer').value);
+        alert('Data write operation confirmed.');
     }
     function loadNote() {
-        const saved = localStorage.getItem('android_note_data');
-        if(saved) document.getElementById('note-buffer').value = saved;
+        document.getElementById('note-buffer').value = localStorage.getItem('g1_sim_note') || "";
     }
 
-    // Canvas Graphics Logic Vector Processing Engine (Doodle Paint)
-    let paintActive = false;
-    let canvas, ctx;
+    // --- DOODLE PAINT CANVAS CONTROLLERS ---
+    let drawing = false; let pCanvas, pCtx;
     function initPaintEngine() {
-        canvas = document.getElementById('paintCanvas');
-        ctx = canvas.getContext('2d');
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight - 40;
-        
-        ctx.strokeStyle = "#ff0000";
-        ctx.lineWidth = 3;
-        ctx.lineCap = "round";
+        pCanvas = document.getElementById('paintCanvas'); pCtx = pCanvas.getContext('2d');
+        pCanvas.width = pCanvas.parentElement.clientWidth; pCanvas.height = pCanvas.parentElement.clientHeight - 40;
+        pCtx.strokeStyle = "#0000ff"; pCtx.lineWidth = 4; pCtx.lineCap = "round";
 
-        canvas.onmousedown = (e) => { paintActive = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
-        canvas.onmousemove = (e) => { if(paintActive) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
-        window.onmouseup = () => { paintActive = false; };
+        pCanvas.onmousedown = (e) => { drawing = true; pCtx.beginPath(); pCtx.moveTo(e.offsetX, e.offsetY); };
+        pCanvas.onmousemove = (e) => { if(drawing) { pCtx.lineTo(e.offsetX, e.offsetY); pCtx.stroke(); } };
+        window.onmouseup = () => drawing = false;
     }
-    function clearCanvas() {
-        if(ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function clearCanvas() { if(pCtx) pCtx.clearRect(0,0,pCanvas.width,pCanvas.height); }
+
+    // --- SNAKE GAME ARCHITECTURAL RENDERING INTERFACE LOOP ---
+    let snakeInterval; let sCanvas, sCtx;
+    let snake = []; let food = {}; let dir = 'RIGHT'; let score = 0;
+    function startSnakeGame() {
+        sCanvas = document.getElementById('snakeCanvas'); sCtx = sCanvas.getContext('2d');
+        snake = [{x: 40, y: 40}, {x: 30, y: 40}, {x: 20, y: 40}];
+        dir = 'RIGHT'; score = 0; spawnFood();
+        clearInterval(snakeInterval);
+        snakeInterval = setInterval(runSnakeTick, 150);
+    }
+    function stopSnakeGame() { clearInterval(snakeInterval); }
+    function changeSnakeDir(nd) {
+        if(nd==='UP' && dir!=='DOWN') dir='UP';
+        if(nd==='DOWN' && dir!=='UP') dir='DOWN';
+        if(nd==='LEFT' && dir!=='RIGHT') dir='LEFT';
+        if(nd==='RIGHT' && dir!=='LEFT') dir='RIGHT';
+    }
+    function spawnFood() {
+        food = { x: Math.floor(Math.random()*20)*10, y: Math.floor(Math.random()*20)*10 };
+    }
+    function runSnakeTick() {
+        let head = Object.assign({}, snake[0]);
+        if(dir === 'UP') head.y -= 10; if(dir === 'DOWN') head.y += 10;
+        if(dir === 'LEFT') head.x -= 10; if(dir === 'RIGHT') head.x += 10;
+
+        // Collision logic
+        if(head.x<0 || head.x>=200 || head.y<0 || head.y>=200 || snake.some(s=>s.x===head.x && s.y===head.y)) {
+            alert('Game Over! Final Score: ' + score); startSnakeGame(); return;
+        }
+        snake.unshift(head);
+        if(head.x === food.x && head.y === food.y) { score += 10; document.getElementById('snake-score').innerText = "Score: " + score; spawnFood(); } else { snake.pop(); }
+
+        // Render Frame
+        sCtx.clearRect(0,0,200,200);
+        sCtx.fillStyle = '#ff0000'; sCtx.fillRect(food.x, food.y, 10, 10);
+        sCtx.fillStyle = '#00ff00'; snake.forEach(s => sCtx.fillRect(s.x, s.y, 9, 9));
+    }
+
+    // --- TASK MANAGER CONTROLLERS ---
+    function killProcesses() {
+        alert('Releasing allocation blocks... Cleaned 42MB of system cache nodes.');
+        document.querySelectorAll('.process-row').forEach((r, i) => {
+            if(i > 0) r.innerHTML = `<span>${r.children[0].innerText}</span><span style="color:red;">Killed</span>`;
+        });
     }
 </script>
 
