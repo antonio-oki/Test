@@ -165,7 +165,12 @@
         }
 
         /* --- APPLICATION SPECIFIC INTERFACES --- */
-        /* Universal Settings Refactor */
+        /* Native Music App Engine Layout */
+        .music-header { background: #ff9900; color: white; padding: 12px; font-weight: bold; font-size: 14px; }
+        .track-row { padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: #333; font-size: 13px; }
+        .track-row:active { background: #f0f0f0; }
+
+        /* Universal Settings */
         .settings-header { background: #444; color: white; padding: 12px; font-weight: bold; }
         .settings-row { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; align-items: center;}
         .settings-row:active { background: #f5f5f5; }
@@ -229,6 +234,7 @@
         <div id="desktop">
             <div class="icon" onclick="openApp('clock')">🕒<br>Clock</div>
             <div class="icon" onclick="openApp('calculator')">➕<br>Calc</div>
+            <div class="icon" onclick="openApp('music')">🎵<br>Music</div>
             <div class="icon" onclick="openApp('settings')">⚙️<br>Settings</div>
         </div>
         
@@ -237,6 +243,7 @@
                 <div class="icon" onclick="openApp('browser')">🌐<br>Browser</div>
                 <div class="icon" onclick="openApp('maps')">🗺️<br>Maps</div>
                 <div class="icon" onclick="openApp('market')">🛍️<br>Market</div>
+                <div class="icon" onclick="openApp('music')">🎵<br>Music</div>
                 <div class="icon" onclick="openApp('clock')">🕒<br>Clock</div>
                 <div class="icon" onclick="openApp('calculator')">➕<br>Calc</div>
                 <div class="icon" onclick="openApp('settings')">⚙️<br>Settings</div>
@@ -247,6 +254,45 @@
 
         <div id="app-window">
             
+            <div id="app-music" class="app-page">
+                <div id="music-list-view">
+                    <div class="music-header">G1 Media Player</div>
+                    <div class="track-row" onclick="selectTrack(0)">
+                        <div><strong>Retro Synths Loop</strong><br><small>Android System Engine</small></div><span>0:45</span>
+                    </div>
+                    <div class="track-row" onclick="selectTrack(1)">
+                        <div><strong>Pixel Pulse Wave</strong><br><small>8-Bit Hero</small></div><span>0:30</span>
+                    </div>
+                    <div class="track-row" onclick="selectTrack(2)">
+                        <div><strong>Astro Dream Melody</strong><br><small>HTC Design Labs</small></div><span>1:00</span>
+                    </div>
+                </div>
+                <div id="music-player-view" style="display:none; background:#fff; height:100%;">
+                    <div class="music-header" style="background:#444; display:flex; justify-content:space-between; align-items:center;">
+                        <span onclick="showMusicList()" style="cursor:pointer; font-size:12px;">📂 Library</span>
+                        <span>Now Playing</span>
+                        <span style="opacity:0;"></span>
+                    </div>
+                    <div style="text-align:center; padding:25px 15px;">
+                        <div style="width:110px; height:110px; background:#e0e0e0; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:45px; border-radius:12px; border:1px solid #ccc; box-shadow:inset 0 0 8px rgba(0,0,0,0.1);">💿</div>
+                        <h4 id="music-title" style="margin:5px 0 2px; color:#111;">Track</h4>
+                        <p id="music-artist" style="margin:0 0 20px; color:#666; font-size:12px;">Artist</p>
+                        
+                        <div style="display:flex; justify-content:space-between; font-size:11px; color:#444; padding:0 5px;">
+                            <span id="music-time-current">0:00</span>
+                            <span id="music-time-total">0:00</span>
+                        </div>
+                        <input type="range" id="music-progress" min="0" max="100" value="0" style="width:100%; margin-bottom:20px;" oninput="seekMusic(this.value)">
+                        
+                        <div style="display:flex; justify-content:center; gap:25px; align-items:center;">
+                            <button onclick="prevTrack()" style="font-size:22px; background:none; border:none; cursor:pointer;">⏮</button>
+                            <button id="music-play-btn" onclick="toggleMusicPlay()" style="font-size:32px; background:none; border:none; cursor:pointer;">▶</button>
+                            <button onclick="nextTrack()" style="font-size:22px; background:none; border:none; cursor:pointer;">⏭</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="app-maps" class="app-page maps-app">
                 <iframe src="https://www.openstreetmap.org/export/embed.html?bbox=-122.09,37.41,-122.07,37.43&layer=mapnik&marker=37.422,-122.084"></iframe>
             </div>
@@ -386,9 +432,9 @@
             <div id="app-killer" class="app-page killer-app">
                 <h3>Advanced Task Manager</h3>
                 <hr>
-                <div class="process-row"><span>system_server (Kernel Core)</span><span style="color:green;">Protected</span></div>
+                <div class="process-row" id="proc-core"><span>system_server (Kernel Core)</span><span style="color:green;">Protected</span></div>
+                <div class="process-row" id="proc-media"><span>com.android.music (Media Engine)</span><span id="proc-media-status" style="color:#666;">Idle</span></div>
                 <div class="process-row"><span>com.android.maps (Map Display)</span><span style="color:#666;">Active</span></div>
-                <div class="process-row"><span>com.android.browser (WebKit)</span><span style="color:#666;">Idle</span></div>
                 <div class="process-row"><span>com.android.market (App Engine)</span><span style="color:#666;">Active</span></div>
                 <br>
                 <button style="width:100%; padding:12px; font-weight:bold; background:#cc0000; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="killProcesses()">Kill Background Cache</button>
@@ -440,12 +486,135 @@
         if(appId === 'paint') initPaintEngine();
         if(appId === 'notes') loadNote();
         if(appId === 'snake') startSnakeGame();
+        if(appId === 'killer') updateTaskManagerUI();
     }
 
     function goHome() {
         document.getElementById('app-window').style.display = "none";
         stopSnakeGame();
     }
+
+    // --- SYNTHESIZED MUSIC PLAYER CORE DRIVER ---
+    let audioCtx = null;
+    let musicTimer = null;
+    let synthTimer = null;
+    let isMusicPlaying = false;
+    let musicTimeTracker = 0;
+    let activeTrackIndex = 0;
+
+    const trackDatabase = [
+        { title: 'Retro Synths Loop', artist: 'Android System Engine', duration: 45, chords: [261.63, 329.63, 392.00, 523.25, 349.23, 440.00, 392.00, 293.66] },
+        { title: 'Pixel Pulse Wave', artist: '8-Bit Hero', duration: 30, chords: [440.00, 493.88, 523.25, 587.33, 523.25, 493.88, 440.00, 392.00] },
+        { title: 'Astro Dream Melody', artist: 'HTC Design Labs', duration: 60, chords: [329.63, 392.00, 440.00, 392.00, 329.63, 261.63, 293.66, 261.63] }
+    ];
+
+    function initAudioSandbox() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    function triggerSynthAudioNode() {
+        if (!isMusicPlaying || !audioCtx || isMuted) return;
+        try {
+            let osc = audioCtx.createOscillator();
+            let gainNode = audioCtx.createGain();
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            let currentTrack = trackDatabase[activeTrackIndex];
+            let tonePointer = Math.floor(musicTimeTracker * 2) % currentTrack.chords.length;
+            
+            osc.frequency.value = currentTrack.chords[tonePointer];
+            osc.type = 'triangle'; // Retro vintage flavor
+            
+            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.38);
+        } catch(e) {}
+    }
+
+    function selectTrack(idx) {
+        initAudioSandbox();
+        activeTrackIndex = idx;
+        musicTimeTracker = 0;
+        
+        document.getElementById('music-list-view').style.display = 'none';
+        document.getElementById('music-player-view').style.display = 'block';
+        
+        updatePlayerUIMatrix();
+        if(!isMusicPlaying) toggleMusicPlay();
+    }
+
+    function showMusicList() {
+        document.getElementById('music-list-view').style.display = 'block';
+        document.getElementById('music-player-view').style.display = 'none';
+    }
+
+    function updatePlayerUIMatrix() {
+        const track = trackDatabase[activeTrackIndex];
+        document.getElementById('music-title').innerText = track.title;
+        document.getElementById('music-artist').innerText = track.artist;
+        document.getElementById('music-time-total').innerText = formatTimeStrings(track.duration);
+        document.getElementById('music-time-current').innerText = formatTimeStrings(musicTimeTracker);
+        document.getElementById('music-progress').value = (musicTimeTracker / track.duration) * 100;
+        document.getElementById('music-play-btn').innerText = isMusicPlaying ? '⏸' : '▶';
+    }
+
+    function formatTimeStrings(totalSecs) {
+        let mins = Math.floor(totalSecs / 60);
+        let secs = Math.floor(totalSecs % 60).toString().padStart(2, '0');
+        return mins + ":" + secs;
+    }
+
+    function toggleMusicPlay() {
+        initAudioSandbox();
+        isMusicPlaying = !isMusicPlaying;
+        
+        if (isMusicPlaying) {
+            // Processing time counters
+            musicTimer = setInterval(() => {
+                const currentTrack = trackDatabase[activeTrackIndex];
+                musicTimeTracker++;
+                if (musicTimeTracker > currentTrack.duration) {
+                    nextTrack();
+                } else {
+                    updatePlayerUIMatrix();
+                }
+            }, 1000);
+            
+            // Fast sequencer loop for musical chiptune feedback
+            synthTimer = setInterval(triggerSynthAudioNode, 400);
+        } else {
+            clearInterval(musicTimer);
+            clearInterval(synthTimer);
+        }
+        updatePlayerUIMatrix();
+    }
+
+    function seekMusic(val) {
+        const track = trackDatabase[activeTrackIndex];
+        musicTimeTracker = Math.floor((val / 100) * track.duration);
+        updatePlayerUIMatrix();
+    }
+
+    function nextTrack() {
+        musicTimeTracker = 0;
+        activeTrackIndex = (activeTrackIndex + 1) % trackDatabase.length;
+        updatePlayerUIMatrix();
+        if(!isMusicPlaying) toggleMusicPlay();
+    }
+
+    function prevTrack() {
+        musicTimeTracker = 0;
+        activeTrackIndex = (activeTrackIndex - 1 + trackDatabase.length) % trackDatabase.length;
+        updatePlayerUIMatrix();
+        if(!isMusicPlaying) toggleMusicPlay();
+    }
+
 
     // --- SETTINGS APPLICATION NESTED DIRECTORY ENGINE ---
     function switchSettingsPanel(panelId) {
@@ -456,7 +625,6 @@
         }
     }
     function adjustBrightness(val) {
-        // Manipulates custom black transparency mask matrix layout values
         document.getElementById('brightness-overlay').style.opacity = (100 - val) / 100;
     }
     let isMuted = false;
@@ -496,10 +664,8 @@
     function installApp(id, icon, label) {
         activeRegistry[id] = { icon: icon, label: label };
 
-        // Mutates Market Interface Action Matrix state profiles
         document.getElementById('m-actions-' + id).innerHTML = `<button class="market-btn uninst" onclick="uninstallApp('${id}')">Uninstall</button>`;
 
-        // Append Node structures to active desktop environment layer
         const dIcon = document.createElement('div');
         dIcon.className = "icon";
         dIcon.id = "desk-shortcut-" + id;
@@ -507,7 +673,6 @@
         dIcon.onclick = () => openApp(id);
         document.getElementById('desktop').appendChild(dIcon);
 
-        // Append Node structures to application sliding drawer system matrix
         const drIcon = document.createElement('div');
         drIcon.className = "icon";
         drIcon.id = "draw-shortcut-" + id;
@@ -517,18 +682,14 @@
     }
 
     function uninstallApp(id) {
-        // Extract structural pointer targets completely out of memory registry arrays
         const appInfo = activeRegistry[id];
         delete activeRegistry[id];
 
-        // Revert UI configuration profiles back inside Market framework layers
         document.getElementById('m-actions-' + id).innerHTML = `<button class="market-btn" onclick="installApp('${id}', '${appInfo.icon}', '${appInfo.label}')">Install</button>`;
 
-        // Vaporize target element nodes off active DOM array layer tracking trees
         document.getElementById("desk-shortcut-" + id)?.remove();
         document.getElementById("draw-shortcut-" + id)?.remove();
 
-        // Safety context drop to exit active deleted frame loop environments
         goHome();
     }
 
@@ -579,22 +740,27 @@
         if(dir === 'UP') head.y -= 10; if(dir === 'DOWN') head.y += 10;
         if(dir === 'LEFT') head.x -= 10; if(dir === 'RIGHT') head.x += 10;
 
-        // Collision logic
         if(head.x<0 || head.x>=200 || head.y<0 || head.y>=200 || snake.some(s=>s.x===head.x && s.y===head.y)) {
             alert('Game Over! Final Score: ' + score); startSnakeGame(); return;
         }
         snake.unshift(head);
         if(head.x === food.x && head.y === food.y) { score += 10; document.getElementById('snake-score').innerText = "Score: " + score; spawnFood(); } else { snake.pop(); }
 
-        // Render Frame
         sCtx.clearRect(0,0,200,200);
         sCtx.fillStyle = '#ff0000'; sCtx.fillRect(food.x, food.y, 10, 10);
         sCtx.fillStyle = '#00ff00'; snake.forEach(s => sCtx.fillRect(s.x, s.y, 9, 9));
     }
 
     // --- TASK MANAGER CONTROLLERS ---
+    function updateTaskManagerUI() {
+        document.getElementById('proc-media-status').innerText = isMusicPlaying ? "Active (Playing)" : "Idle";
+        document.getElementById('proc-media-status').style.color = isMusicPlaying ? "green" : "#666";
+    }
     function killProcesses() {
-        alert('Releasing allocation blocks... Cleaned 42MB of system cache nodes.');
+        alert('Releasing allocation blocks... Cleaned 56MB of system cache nodes.');
+        if(isMusicPlaying) {
+            toggleMusicPlay(); // Shuts down active synthesizer loop
+        }
         document.querySelectorAll('.process-row').forEach((r, i) => {
             if(i > 0) r.innerHTML = `<span>${r.children[0].innerText}</span><span style="color:red;">Killed</span>`;
         });
