@@ -1,771 +1,957 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Android 1.0 Advanced Engine</title>
-    <style>
-        /* --- PHONE HARDWARE FRAME --- */
-        body { 
-            margin: 0; 
-            background: #121212; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            font-family: 'Arial', sans-serif; 
-            user-select: none;
-        }
-        #phone { 
-            width: 310px; 
-            height: 580px; 
-            background: #252525; 
-            position: relative; 
-            border: 4px solid #3a3a3a; 
-            border-radius: 35px; 
-            box-shadow: 0 0 40px rgba(0,0,0,0.9);
-            display: flex;
-            flex-direction: column;
-        }
-        #screen {
-            width: 100%;
-            height: 500px;
-            background: #000;
-            position: relative;
-            overflow: hidden;
-            border-radius: 30px 30px 0 0;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T-Mobile G1 — Android 1.0</title>
+<style>
+  :root{
+    --shell:#dcdcd6; --shell-dark:#b9b9b2; --chin:#3a3a3a; --chin-dark:#222;
+    --screen-bg:#000; --accent:#9acb33; --status-h:20px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:#1b1b1b;
+    display:flex; justify-content:center; align-items:center;
+    font-family:'Helvetica Neue',Arial,sans-serif; user-select:none;
+    padding:20px;
+  }
+  /* ===== DEVICE SHELL ===== */
+  #device{
+    width:300px; background:linear-gradient(180deg,var(--shell),var(--shell-dark));
+    border-radius:18px; padding:10px 10px 0 10px; position:relative;
+    box-shadow:0 25px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.4);
+  }
+  #earpiece{
+    width:50px; height:5px; background:#888; border-radius:3px; margin:4px auto 8px;
+  }
+  /* ===== SCREEN ===== */
+  #screen-wrap{
+    width:280px; height:420px; background:#000; border-radius:6px; overflow:hidden;
+    position:relative; border:2px solid #111; margin:0 auto;
+    transition:transform .35s cubic-bezier(.2,.7,.3,1);
+  }
+  #screen-wrap.slid{ transform:translateY(-14px); }
+  #status-bar{
+    height:var(--status-h); background:#000; color:#cfcfcf; font-size:10px;
+    display:flex; justify-content:space-between; align-items:center; padding:0 6px;
+    cursor:pointer; position:relative; z-index:40; border-bottom:1px solid #1c1c1c;
+  }
+  #status-left{display:flex; gap:5px; align-items:center;}
+  #status-right{display:flex; gap:4px; align-items:center;}
 
-        /* --- BRIGHTNESS DRIVER LAYER --- */
-        #brightness-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: black;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 999;
-        }
+  /* notification shade */
+  #shade{
+    position:absolute; top:var(--status-h); left:0; width:100%; height:0;
+    background:rgba(15,15,15,.97); color:#eee; overflow:hidden;
+    transition:height .25s ease; z-index:90; font-size:11px;
+  }
+  #shade.open{ height:200px; }
+  .shade-row{padding:9px 10px; border-bottom:1px solid #2a2a2a;}
+  .shade-clear{ text-align:center; padding:8px; background:#222; cursor:pointer; color:#9acb33; font-weight:bold;}
 
-        /* --- OS CORE STYLING --- */
-        #status-bar { 
-            height: 25px; 
-            background: #000; 
-            color: #fff; 
-            font-size: 11px; 
-            padding: 0 12px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            border-bottom: 1px solid #1a1a1a;
-            z-index: 100;
-            position: relative;
-        }
-        #desktop { 
-            height: 475px; 
-            background: linear-gradient(to bottom, #054105, #000000); 
-            padding: 15px;
-            display: flex;
-            flex-wrap: wrap;
-            align-content: flex-start;
-            gap: 15px;
-            box-sizing: border-box;
-        }
+  /* ===== HOME SCREEN ===== */
+  #home{ position:relative; height:400px; overflow:hidden; background:#0c1f0c; }
+  #search-widget{
+    margin:8px; background:#fff; border-radius:14px; height:28px;
+    display:flex; align-items:center; padding:0 10px; gap:6px; box-shadow:0 1px 3px rgba(0,0,0,.4);
+    position:relative; z-index:5;
+  }
+  #search-widget input{ border:none; outline:none; flex:1; font-size:11px; background:transparent;}
+  #panes{ display:flex; width:300%; height:340px; transition:transform .3s ease; }
+  .pane{ width:33.333%; padding:10px; display:flex; flex-wrap:wrap; gap:14px; align-content:flex-start; box-sizing:border-box;}
+  .hicon{
+    width:60px; display:flex; flex-direction:column; align-items:center; gap:3px;
+    color:#fff; font-size:9px; text-align:center; cursor:pointer;
+  }
+  .hicon .glyph{
+    width:46px; height:46px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25);
+    border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px;
+  }
+  .hicon:active .glyph{ background:rgba(255,255,255,.3); }
+  #dots{ position:absolute; bottom:6px; left:0; width:100%; text-align:center; z-index:5;}
+  #dots span{ display:inline-block; width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.3); margin:0 3px;}
+  #dots span.active{ background:#fff; }
 
-        /* --- APP DRAWER --- */
-        #drawer { 
-            position: absolute; 
-            top: 100%; 
-            left: 0;
-            width: 100%; 
-            height: calc(100% - 25px); 
-            background: rgba(10, 10, 10, 0.97); 
-            transition: top 0.3s cubic-bezier(0, 0.5, 0.3, 1); 
-            padding: 20px;
-            box-sizing: border-box;
-            z-index: 50;
-        }
-        #drawer.open { top: 25px; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        
-        .icon { 
-            width: 65px; 
-            height: 65px; 
-            background: rgba(255,255,255,0.08); 
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 12px; 
-            display: flex; 
-            flex-direction: column;
-            justify-content: center; 
-            align-items: center; 
-            font-size: 11px; 
-            color: white;
-            cursor: pointer;
-            text-align: center;
-        }
-        .icon:active { background: rgba(255,255,255,0.25); }
+  /* drawer pull tab */
+  #drawer-tab{
+    position:absolute; bottom:0; left:0; width:100%; height:18px; background:#262626;
+    color:#ccc; text-align:center; font-size:10px; line-height:18px; cursor:pointer;
+    border-top:1px solid #3a3a3a; z-index:30;
+  }
+  #drawer{
+    position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(8,8,8,.98);
+    transform:translateY(100%); transition:transform .3s cubic-bezier(.2,.7,.3,1); z-index:70; padding:12px;
+    overflow-y:auto;
+  }
+  #drawer.open{ transform:translateY(0); }
+  #drawer-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; padding-top:6px;}
 
-        #handle { 
-            position: absolute; 
-            bottom: 0; 
-            width: 100%; 
-            height: 25px; 
-            background: #2a2a2a; 
-            color: white; 
-            text-align: center; 
-            cursor: pointer;
-            font-size: 13px;
-            line-height: 25px;
-            border-top: 1px solid #3a3a3a;
-            z-index: 60;
-        }
+  /* home menu popup (Menu hw button) */
+  #home-menu{
+    position:absolute; bottom:22px; left:8px; right:8px; background:#1e1e1e; border:1px solid #444;
+    border-radius:6px; z-index:95; display:none; overflow:hidden;
+  }
+  #home-menu.open{ display:block; }
+  #home-menu div{ padding:9px 12px; color:#eee; font-size:11px; border-bottom:1px solid #333; cursor:pointer;}
+  #home-menu div:last-child{border-bottom:none;}
+  #home-menu div:active{ background:#333; }
 
-        /* --- NAVIGATION CHIN --- */
-        #hardware-chin {
-            width: 100%;
-            height: 80px;
-            background: #1a1a1a;
-            border-radius: 0 0 35px 35px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            border-top: 2px solid #2d2d2d;
-        }
-        .hw-btn {
-            background: linear-gradient(to bottom, #444, #222);
-            color: white;
-            border: 1px solid #555;
-            padding: 10px 18px;
-            font-size: 11px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .hw-btn:active { background: #000; }
+  /* ===== APP WINDOW ===== */
+  #app-window{ position:absolute; top:var(--status-h); left:0; width:100%; height:400px; background:#fff; display:none; z-index:60;}
+  .app-page{ display:none; width:100%; height:100%; overflow-y:auto; color:#111; position:relative; background:#fff;}
+  .app-header{ background:#3b5998; color:#fff; padding:8px 10px; font-size:12px; font-weight:bold; }
 
-        /* --- OS WINDOW ENVIRONMENT --- */
-        #app-window {
-            position: absolute;
-            top: 25px;
-            left: 0;
-            width: 100%;
-            height: calc(100% - 25px);
-            background: #fff;
-            display: none;
-            z-index: 80;
-        }
-        .app-page {
-            width: 100%;
-            height: 100%;
-            display: none;
-            box-sizing: border-box;
-            color: #000;
-            position: relative;
-            background: #fff;
-            overflow-y: auto;
-        }
+  /* Phone / Dialer */
+  .dial-display{ font-size:22px; text-align:center; padding:14px; letter-spacing:2px; color:#111; min-height:30px;}
+  .dial-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:0 14px;}
+  .dial-grid button{ height:38px; font-size:16px; border-radius:50%; border:1px solid #ccc; background:#f3f3f3;}
+  .call-actions{ display:flex; justify-content:center; gap:20px; padding:14px;}
+  .call-btn{ width:50px; height:50px; border-radius:50%; border:none; font-size:20px; color:#fff; cursor:pointer;}
+  .call-green{ background:#3a9b3a; }
+  .call-red{ background:#c0392b; }
+  .calling-view{ text-align:center; padding-top:60px; }
 
-        /* --- APPLICATION SPECIFIC INTERFACES --- */
-        /* Native Music App Engine Layout */
-        .music-header { background: #ff9900; color: white; padding: 12px; font-weight: bold; font-size: 14px; }
-        .track-row { padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: #333; font-size: 13px; }
-        .track-row:active { background: #f0f0f0; }
+  /* Contacts */
+  .contact-row{ padding:11px; border-bottom:1px solid #eee; display:flex; align-items:center; gap:10px; font-size:13px;}
+  .avatar{ width:32px; height:32px; border-radius:50%; background:#3b5998; color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:bold;}
 
-        /* Universal Settings */
-        .settings-header { background: #444; color: white; padding: 12px; font-weight: bold; }
-        .settings-row { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; align-items: center;}
-        .settings-row:active { background: #f5f5f5; }
-        .settings-panel { display: none; height: 100%; background: white; }
-        .back-settings { background: #666; color: white; border: none; padding: 5px 10px; margin: 10px; cursor: pointer; font-size: 12px; border-radius: 4px; }
+  /* Browser */
+  .browser-app{ display:flex; flex-direction:column; height:100%; }
+  .browser-bar{ display:flex; background:#cfcfcf; padding:5px; gap:4px; border-bottom:1px solid #999;}
+  .browser-bar input{ flex:1; padding:4px 6px; font-size:11px; border:1px solid #999; border-radius:3px;}
+  .browser-bar button{ font-size:11px; padding:4px 8px;}
+  .browser-viewport{ flex:1; overflow-y:auto; padding:16px; font-size:13px;}
+  .gsc-input{ width:100%; padding:8px; font-size:13px; border:1px solid #ccc; border-radius:3px; margin:10px 0;}
 
-        /* Market */
-        .market-header { background: #a60000; color: white; padding: 12px; font-weight: bold; font-size: 14px; }
-        .market-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; color: #333; }
-        .market-btn { background: #0088cc; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;}
-        .market-btn.uninst { background: #cc0000; }
+  /* Gmail */
+  .gmail-header{ background:#c0392b; }
+  .mail-row{ padding:10px; border-bottom:1px solid #eee; font-size:12px; cursor:pointer;}
+  .mail-row .from{ font-weight:bold; }
+  .mail-row.unread{ background:#fdf6f6; }
+  .mail-read-view{ padding:12px; font-size:12px; line-height:1.5;}
 
-        /* Maps */
-        .maps-app iframe { width: 100%; height: 100%; border: none; }
+  /* IM */
+  .im-header{ background:#2e8b57;}
+  .buddy-row{ padding:10px; border-bottom:1px solid #eee; display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;}
+  .dot{width:8px;height:8px;border-radius:50%;}
+  .dot.online{background:#2e8b57;} .dot.away{background:#e0a300;} .dot.offline{background:#999;}
+  .chat-log{ height:300px; overflow-y:auto; padding:8px; font-size:12px; background:#f7f7f7;}
+  .bubble{ max-width:75%; margin:5px 0; padding:6px 9px; border-radius:10px; font-size:12px;}
+  .bubble.me{ background:#dcf0c9; margin-left:auto; }
+  .bubble.them{ background:#eee; }
+  .chat-input-row{ display:flex; border-top:1px solid #ccc; }
+  .chat-input-row input{ flex:1; border:none; padding:8px; font-size:12px; outline:none;}
+  .chat-input-row button{ border:none; background:#2e8b57; color:#fff; padding:0 14px; font-size:12px;}
 
-        /* Calculator */
-        .calc-app { padding: 12px; background: #e0e0e0; height: 100%; box-sizing: border-box; }
-        #calc-screen { width: 100%; height: 45px; font-size: 24px; text-align: right; margin-bottom: 12px; padding: 5px; box-sizing: border-box; }
-        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-        .calc-grid button { height: 48px; font-size: 16px; font-weight: bold; cursor: pointer; }
+  /* Amazon MP3 */
+  .amz-header{ background:#232f3e; }
+  .track-row{ padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; font-size:12px;}
+  .amz-btn{ border:1px solid #e77600; background:#f0c14b; padding:4px 8px; border-radius:3px; font-size:11px; cursor:pointer;}
+  .amz-bought{ color:#2e8b57; font-size:11px; font-weight:bold; }
+  #amz-player{ position:sticky; bottom:0; background:#232f3e; color:#fff; padding:8px; font-size:11px; display:none;}
 
-        /* Clock */
-        .clock-app { text-align: center; padding-top: 90px; background: #050505; height: 100%; color: #00ff00; font-family: monospace; box-sizing: border-box;}
+  /* Pictures */
+  .pic-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:4px; padding:6px;}
+  .pic-cell{ aspect-ratio:1; background:#ccc; display:flex; align-items:center; justify-content:center; font-size:22px; cursor:pointer;}
+  .pic-viewer{ height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#000; color:#fff;}
 
-        /* Web Browser */
-        .browser-app { display: flex; flex-direction: column; height: 100%; background: #fff; }
-        .browser-bar { display: flex; background: #cfcfcf; padding: 6px; gap: 4px; border-bottom: 1px solid #aaa; }
-        .browser-bar input { flex-grow: 1; padding: 5px; font-size: 12px; }
-        .browser-viewport { padding: 15px; flex-grow: 1; overflow-y: auto; font-size: 14px; }
+  /* Market */
+  .market-header{ background:#a4c639; color:#1a1a1a;}
+  .market-item{ display:flex; justify-content:space-between; align-items:center; padding:11px; border-bottom:1px solid #eee; font-size:12px;}
+  .market-btn{ background:#3b5998; border:none; color:#fff; padding:6px 10px; border-radius:3px; font-size:11px; cursor:pointer;}
+  .market-btn.uninst{ background:#c0392b; }
 
-        /* Notes App */
-        .notes-app { padding: 12px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
-        .notes-app textarea { flex-grow: 1; width: 100%; resize: none; margin-bottom: 8px; padding: 8px; box-sizing: border-box; }
+  /* Alarm */
+  .alarm-row{ padding:12px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; font-size:13px;}
 
-        /* Doodle Paint App */
-        .paint-app { height: 100%; display: flex; flex-direction: column; background: #fff; }
-        #paintCanvas { flex-grow: 1; background: #fff; width: 100%; height: 80%; border-bottom: 1px solid #ccc; cursor: crosshair; }
+  /* Settings */
+  .settings-header{ background:#444; color:#fff; }
+  .settings-row{ padding:13px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; cursor:pointer; font-size:12px;}
+  .settings-panel{ display:none; height:100%; }
+  .back-settings{ background:#666; color:#fff; border:none; padding:5px 10px; margin:8px; border-radius:3px; font-size:11px;}
 
-        /* Snake Game Layout */
-        .snake-app { background: #111; height: 100%; color: white; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
-        #snakeCanvas { background: #000; border: 2px solid #333; margin-top: 10px; }
-        .dpad { display: grid; grid-template-columns: repeat(3, 1fr); width: 120px; gap: 5px; margin-top: 10px; }
-        .dpad button { background: #444; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; font-size: 16px; }
+  /* Camera */
+  .camera-app{ height:100%; background:#000; display:flex; flex-direction:column; }
+  .viewfinder{ flex:1; background:linear-gradient(135deg,#345,#122); position:relative;}
+  .shutter-row{ background:#111; padding:10px; display:flex; justify-content:center;}
+  .shutter-btn{ width:46px; height:46px; border-radius:50%; background:#ccc; border:3px solid #888;}
+  .flash-overlay{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none;}
 
-        /* Task Killer */
-        .killer-app { padding: 15px; background: #fff; color: #000; }
-        .process-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
-    </style>
+  /* ===== KEYBOARD TRAY (slide-out) ===== */
+  #kb-tab{
+    position:absolute; right:-9px; top:140px; width:18px; height:60px; background:#555;
+    border-radius:4px; z-index:50; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    color:#ccc; font-size:9px; writing-mode:vertical-rl; border:1px solid #333;
+  }
+  #kb-panel{
+    overflow:hidden; height:0; background:#2b2b2b; transition:height .3s ease; border-radius:0 0 6px 6px;
+  }
+  #kb-panel.open{ height:148px; }
+  .kb-row{ display:flex; justify-content:center; gap:3px; padding:3px 0;}
+  .kb-key{
+    background:#454545; color:#eee; border:1px solid #1a1a1a; border-radius:3px;
+    font-size:9.5px; padding:6px 0; flex:1; max-width:24px; text-align:center; cursor:pointer;
+  }
+  .kb-key.wide{ max-width:40px; flex:1.6; }
+  .kb-key:active{ background:#666; }
+
+  /* ===== CHIN: physical buttons + trackball ===== */
+  #chin{
+    height:78px; background:linear-gradient(180deg,var(--chin),var(--chin-dark));
+    border-radius:0 0 16px 16px; margin:8px -10px 0; padding:10px 14px 14px;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  #chin-row{ display:flex; align-items:center; justify-content:space-between; width:100%;}
+  .hwbtn{
+    background:linear-gradient(180deg,#666,#333); border:1px solid #111; color:#ddd;
+    font-size:9px; border-radius:5px; padding:8px 6px; cursor:pointer; width:42px; text-align:center;
+  }
+  .hwbtn.green{ background:linear-gradient(180deg,#4caf50,#2e7d32); color:#fff;}
+  .hwbtn.red{ background:linear-gradient(180deg,#e53935,#b71c1c); color:#fff;}
+  .hwbtn:active{ filter:brightness(.8); }
+  #trackball{
+    width:30px; height:30px; border-radius:50%; cursor:pointer;
+    background:radial-gradient(circle at 35% 30%, #aaa, #444 70%, #111);
+    border:1px solid #000; flex-shrink:0;
+  }
+  #trackball:active{ filter:brightness(1.3); }
+  #chin-label{ font-size:8px; color:#777; letter-spacing:1px;}
+
+  #toast{
+    position:absolute; bottom:30px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.85);
+    color:#fff; font-size:11px; padding:6px 12px; border-radius:5px; z-index:200; display:none;
+  }
+</style>
 </head>
 <body>
 
-<div id="phone">
-    <div id="screen">
-        <div id="brightness-overlay"></div>
+<div id="device">
+  <div id="earpiece"></div>
+  <div id="screen-wrap">
 
-        <div id="status-bar">
-            <span id="time">12:00 AM</span>
-            <span id="sound-indicator">🔊 3G █ 100%</span>
-        </div>
-        
-        <div id="desktop">
-            <div class="icon" onclick="openApp('clock')">🕒<br>Clock</div>
-            <div class="icon" onclick="openApp('calculator')">➕<br>Calc</div>
-            <div class="icon" onclick="openApp('music')">🎵<br>Music</div>
-            <div class="icon" onclick="openApp('settings')">⚙️<br>Settings</div>
-        </div>
-        
-        <div id="drawer">
-            <div class="grid" id="drawer-grid">
-                <div class="icon" onclick="openApp('browser')">🌐<br>Browser</div>
-                <div class="icon" onclick="openApp('maps')">🗺️<br>Maps</div>
-                <div class="icon" onclick="openApp('market')">🛍️<br>Market</div>
-                <div class="icon" onclick="openApp('music')">🎵<br>Music</div>
-                <div class="icon" onclick="openApp('clock')">🕒<br>Clock</div>
-                <div class="icon" onclick="openApp('calculator')">➕<br>Calc</div>
-                <div class="icon" onclick="openApp('settings')">⚙️<br>Settings</div>
-            </div>
-        </div>
-        
-        <div id="handle" onclick="toggleDrawer()">▲ Menu</div>
-
-        <div id="app-window">
-            
-            <div id="app-music" class="app-page">
-                <div id="music-list-view">
-                    <div class="music-header">G1 Media Player</div>
-                    <div class="track-row" onclick="selectTrack(0)">
-                        <div><strong>Retro Synths Loop</strong><br><small>Android System Engine</small></div><span>0:45</span>
-                    </div>
-                    <div class="track-row" onclick="selectTrack(1)">
-                        <div><strong>Pixel Pulse Wave</strong><br><small>8-Bit Hero</small></div><span>0:30</span>
-                    </div>
-                    <div class="track-row" onclick="selectTrack(2)">
-                        <div><strong>Astro Dream Melody</strong><br><small>HTC Design Labs</small></div><span>1:00</span>
-                    </div>
-                </div>
-                <div id="music-player-view" style="display:none; background:#fff; height:100%;">
-                    <div class="music-header" style="background:#444; display:flex; justify-content:space-between; align-items:center;">
-                        <span onclick="showMusicList()" style="cursor:pointer; font-size:12px;">📂 Library</span>
-                        <span>Now Playing</span>
-                        <span style="opacity:0;"></span>
-                    </div>
-                    <div style="text-align:center; padding:25px 15px;">
-                        <div style="width:110px; height:110px; background:#e0e0e0; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:45px; border-radius:12px; border:1px solid #ccc; box-shadow:inset 0 0 8px rgba(0,0,0,0.1);">💿</div>
-                        <h4 id="music-title" style="margin:5px 0 2px; color:#111;">Track</h4>
-                        <p id="music-artist" style="margin:0 0 20px; color:#666; font-size:12px;">Artist</p>
-                        
-                        <div style="display:flex; justify-content:space-between; font-size:11px; color:#444; padding:0 5px;">
-                            <span id="music-time-current">0:00</span>
-                            <span id="music-time-total">0:00</span>
-                        </div>
-                        <input type="range" id="music-progress" min="0" max="100" value="0" style="width:100%; margin-bottom:20px;" oninput="seekMusic(this.value)">
-                        
-                        <div style="display:flex; justify-content:center; gap:25px; align-items:center;">
-                            <button onclick="prevTrack()" style="font-size:22px; background:none; border:none; cursor:pointer;">⏮</button>
-                            <button id="music-play-btn" onclick="toggleMusicPlay()" style="font-size:32px; background:none; border:none; cursor:pointer;">▶</button>
-                            <button onclick="nextTrack()" style="font-size:22px; background:none; border:none; cursor:pointer;">⏭</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="app-maps" class="app-page maps-app">
-                <iframe src="https://www.openstreetmap.org/export/embed.html?bbox=-122.09,37.41,-122.07,37.43&layer=mapnik&marker=37.422,-122.084"></iframe>
-            </div>
-
-            <div id="app-calculator" class="app-page">
-                <div class="calc-app">
-                    <input type="text" id="calc-screen" readonly value="0">
-                    <div class="calc-grid">
-                        <button onclick="calcPress('7')">7</button><button onclick="calcPress('8')">8</button><button onclick="calcPress('9')">9</button><button onclick="calcPress('/')">/</button>
-                        <button onclick="calcPress('4')">4</button><button onclick="calcPress('5')">5</button><button onclick="calcPress('6')">6</button><button onclick="calcPress('*')">*</button>
-                        <button onclick="calcPress('1')">1</button><button onclick="calcPress('2')">2</button><button onclick="calcPress('3')">3</button><button onclick="calcPress('-')">-</button>
-                        <button onclick="calcClear()">C</button><button onclick="calcPress('0')">0</button><button onclick="calcEval('=')">=</button><button onclick="calcPress('+')">+</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="app-settings" class="app-page">
-                <div id="settings-main-page">
-                    <div class="settings-header">Settings</div>
-                    <div class="settings-row" onclick="switchSettingsPanel('display')"><div>📱 Display Wallpaper</div><span>&gt;</span></div>
-                    <div class="settings-row" onclick="switchSettingsPanel('brightness')"><div>☀️ Screen Brightness</div><span>&gt;</span></div>
-                    <div class="settings-row" onclick="switchSettingsPanel('sound')"><div>🔊 Volume & Alerts</div><span>&gt;</span></div>
-                    <div class="settings-row" onclick="switchSettingsPanel('about')"><div>ℹ️ About Android Emulator</div><span>&gt;</span></div>
-                </div>
-
-                <div id="settings-display" class="settings-panel">
-                    <button class="back-settings" onclick="switchSettingsPanel('main')">&lt; Back</button>
-                    <div style="padding:15px;">
-                        <h4>Choose Desktop Wall:</h4>
-                        <button style="width:100%; padding:10px; margin-bottom:8px;" onclick="setBg('#054105')">Classic Green</button>
-                        <button style="width:100%; padding:10px; margin-bottom:8px;" onclick="setBg('#0a2452')">Cosmos Blue</button>
-                        <button style="width:100%; padding:10px; margin-bottom:8px;" onclick="setBg('#222')">Charcoal Dark</button>
-                    </div>
-                </div>
-
-                <div id="settings-brightness" class="settings-panel">
-                    <button class="back-settings" onclick="switchSettingsPanel('main')">&lt; Back</button>
-                    <div style="padding:15px;">
-                        <h4>Hardware Lighting Matrix:</h4>
-                        <input type="range" min="10" max="100" value="100" style="width:100%;" oninput="adjustBrightness(this.value)">
-                        <p style="font-size:12px; color:#666;">Simulates backlit power consumption optimization values.</p>
-                    </div>
-                </div>
-
-                <div id="settings-sound" class="settings-panel">
-                    <button class="back-settings" onclick="switchSettingsPanel('main')">&lt; Back</button>
-                    <div style="padding:15px;">
-                        <h4>Sound Matrix:</h4>
-                        <button style="width:100%; padding:12px; margin-bottom:10px;" id="sound-btn" onclick="toggleMuteState()">Toggle Silent Mode</button>
-                    </div>
-                </div>
-
-                <div id="settings-about" class="settings-panel">
-                    <button class="back-settings" onclick="switchSettingsPanel('main')">&lt; Back</button>
-                    <div style="padding:15px; font-size:13px; line-height:1.6;">
-                        <strong>Model:</strong> T-Mobile G1 (HTC Dream)<br>
-                        <strong>Firmware Base:</strong> Android 1.0 Astro<br>
-                        <strong>Baseband:</strong> TC-OS-2026-v1.4<br>
-                        <strong>Kernel:</strong> Linux v2.6.25-android-g1
-                    </div>
-                </div>
-            </div>
-
-            <div id="app-clock" class="app-page clock-app">
-                <h2 id="big-time" style="font-size:32px; margin:0;">00:00:00 PM</h2>
-                <p style="color:#777;">Android v1.0 Desk Clock Sub-System</p>
-            </div>
-
-            <div id="app-market" class="app-page" style="background:#fff;">
-                <div class="market-header">Android Market (2008 Repository)</div>
-                
-                <div class="market-item">
-                    <div><strong>Notes Notepad</strong><br><small style="color:#777;">Persistent local string registry data tool</small></div>
-                    <div id="m-actions-notes">
-                        <button class="market-btn" onclick="installApp('notes', '📝', 'Notes')">Install</button>
-                    </div>
-                </div>
-                
-                <div class="market-item">
-                    <div><strong>Doodle Paint</strong><br><small style="color:#777;">Finger tracking canvas array rendering utility</small></div>
-                    <div id="m-actions-paint">
-                        <button class="market-btn" onclick="installApp('paint', '🎨', 'Paint')">Install</button>
-                    </div>
-                </div>
-
-                <div class="market-item">
-                    <div><strong>Retro Snake Game</strong><br><small style="color:#777;">Classic structural algorithmic arcade game</small></div>
-                    <div id="m-actions-snake">
-                        <button class="market-btn" onclick="installApp('snake', '🐍', 'Snake')">Install</button>
-                    </div>
-                </div>
-
-                <div class="market-item">
-                    <div><strong>Memory Task Killer</strong><br><small style="color:#777;">2008 Vintage application instance lifecycle tool</small></div>
-                    <div id="m-actions-killer">
-                        <button class="market-btn" onclick="installApp('killer', '🚫', 'Task Killer')">Install</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="app-browser" class="app-page browser-app">
-                <div class="browser-bar">
-                    <input type="text" id="url-bar" value="google.com" readonly>
-                    <button onclick="alert('Google server pipeline synced.')">Go</button>
-                </div>
-                <div id="browser-view" class="browser-viewport">
-                    <h2>Google</h2>
-                    <input type="text" id="search-input" style="width:80%;" placeholder="Search the 2008 Web..."><br><br>
-                    <button onclick="browseSearch()">Google Search</button>
-                </div>
-            </div>
-
-            <div id="app-notes" class="app-page notes-app">
-                <h3>Notepad Log Buffer</h3>
-                <textarea id="note-buffer" placeholder="Type text payload data logs here..."></textarea>
-                <button style="width:100%; padding:10px; font-weight:bold; cursor:pointer;" onclick="saveNote()">Save to Local Storage</button>
-            </div>
-
-            <div id="app-paint" class="app-page paint-app">
-                <div style="background:#eee; padding:5px; display:flex; justify-content:space-between; align-items:center;">
-                    <strong>Doodle Canvas</strong>
-                    <button onclick="clearCanvas()">Wipe</button>
-                </div>
-                <canvas id="paintCanvas"></canvas>
-            </div>
-
-            <div id="app-snake" class="app-page snake-app">
-                <canvas id="snakeCanvas" width="200" height="200"></canvas>
-                <div class="dpad">
-                    <div></div><button onclick="changeSnakeDir('UP')">▲</button><div></div>
-                    <button onclick="changeSnakeDir('LEFT')">◀</button><div style="text-align:center; line-height:35px; font-size:10px;">D-PAD</div><button onclick="changeSnakeDir('RIGHT')">▶</button>
-                    <div></div><button onclick="changeSnakeDir('DOWN')">▼</button><div></div>
-                </div>
-                <div id="snake-score" style="margin-top:10px; font-family:monospace;">Score: 0</div>
-            </div>
-
-            <div id="app-killer" class="app-page killer-app">
-                <h3>Advanced Task Manager</h3>
-                <hr>
-                <div class="process-row" id="proc-core"><span>system_server (Kernel Core)</span><span style="color:green;">Protected</span></div>
-                <div class="process-row" id="proc-media"><span>com.android.music (Media Engine)</span><span id="proc-media-status" style="color:#666;">Idle</span></div>
-                <div class="process-row"><span>com.android.maps (Map Display)</span><span style="color:#666;">Active</span></div>
-                <div class="process-row"><span>com.android.market (App Engine)</span><span style="color:#666;">Active</span></div>
-                <br>
-                <button style="width:100%; padding:12px; font-weight:bold; background:#cc0000; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="killProcesses()">Kill Background Cache</button>
-            </div>
-
-        </div>
+    <div id="status-bar" onclick="toggleShade()">
+      <div id="status-left"><span id="notif-icons"></span></div>
+      <span id="time">12:00</span>
+      <div id="status-right"><span>3G</span><span>▮▮▮</span><span id="batt">100%</span></div>
     </div>
 
-    <div id="hardware-chin">
-        <button class="hw-btn" onclick="goHome()">🏠 HOME</button>
-        <button class="hw-btn" onclick="goHome()">↩ BACK</button>
+    <div id="shade">
+      <div class="shade-row" id="shade-gmail">📧 Gmail — no new mail</div>
+      <div class="shade-row" id="shade-im">💬 IM — no new messages</div>
+      <div class="shade-row">🛍️ Market — nothing pending</div>
+      <div class="shade-clear" onclick="clearNotifications()">Clear notifications</div>
     </div>
+
+    <div id="home">
+      <div id="search-widget" onclick="openApp('browser'); focusSearch();">🔍 <input placeholder="Search Google" readonly></div>
+      <div id="panes">
+        <div class="pane">
+          <div class="hicon" onclick="openApp('phone')"><div class="glyph">📞</div>Phone</div>
+          <div class="hicon" onclick="openApp('contacts')"><div class="glyph">👤</div>Contacts</div>
+          <div class="hicon" onclick="openApp('browser')"><div class="glyph">🌐</div>Browser</div>
+          <div class="hicon" onclick="openApp('maps')"><div class="glyph">🗺️</div>Maps</div>
+        </div>
+        <div class="pane">
+          <div class="hicon" onclick="openApp('camera')"><div class="glyph">📷</div>Camera</div>
+          <div class="hicon" onclick="openApp('gmail')"><div class="glyph">✉️</div>Gmail</div>
+          <div class="hicon" onclick="openApp('im')"><div class="glyph">💬</div>IM</div>
+          <div class="hicon" onclick="openApp('amazonmp3')"><div class="glyph">🎵</div>Amazon MP3</div>
+        </div>
+        <div class="pane">
+          <div class="hicon" onclick="openApp('pictures')"><div class="glyph">🖼️</div>Pictures</div>
+          <div class="hicon" onclick="openApp('alarm')"><div class="glyph">⏰</div>Alarm Clock</div>
+          <div class="hicon" onclick="openApp('market')"><div class="glyph">🛍️</div>Market</div>
+          <div class="hicon" onclick="openApp('settings')"><div class="glyph">⚙️</div>Settings</div>
+        </div>
+      </div>
+      <div id="dots"><span class="active"></span><span></span><span></span></div>
+    </div>
+
+    <div id="home-menu">
+      <div onclick="addShortcutPrompt()">Add</div>
+      <div onclick="switchSettingsPanel('display'); openApp('settings'); closeHomeMenu();">Wallpaper</div>
+      <div onclick="openApp('browser'); focusSearch(); closeHomeMenu();">Search</div>
+      <div onclick="toggleShade(); closeHomeMenu();">Notifications</div>
+      <div onclick="openApp('settings'); closeHomeMenu();">Settings</div>
+    </div>
+
+    <div id="drawer-tab" onclick="toggleDrawer()">▲ All apps</div>
+    <div id="drawer">
+      <div id="drawer-grid">
+        <div class="hicon" onclick="openApp('phone')"><div class="glyph">📞</div>Phone</div>
+        <div class="hicon" onclick="openApp('contacts')"><div class="glyph">👤</div>Contacts</div>
+        <div class="hicon" onclick="openApp('browser')"><div class="glyph">🌐</div>Browser</div>
+        <div class="hicon" onclick="openApp('maps')"><div class="glyph">🗺️</div>Maps</div>
+        <div class="hicon" onclick="openApp('camera')"><div class="glyph">📷</div>Camera</div>
+        <div class="hicon" onclick="openApp('gmail')"><div class="glyph">✉️</div>Gmail</div>
+        <div class="hicon" onclick="openApp('im')"><div class="glyph">💬</div>IM</div>
+        <div class="hicon" onclick="openApp('amazonmp3')"><div class="glyph">🎵</div>Amazon MP3</div>
+        <div class="hicon" onclick="openApp('pictures')"><div class="glyph">🖼️</div>Pictures</div>
+        <div class="hicon" onclick="openApp('alarm')"><div class="glyph">⏰</div>Alarm Clock</div>
+        <div class="hicon" onclick="openApp('market')"><div class="glyph">🛍️</div>Market</div>
+        <div class="hicon" onclick="openApp('settings')"><div class="glyph">⚙️</div>Settings</div>
+      </div>
+    </div>
+
+    <!-- ===== APP WINDOW ===== -->
+    <div id="app-window">
+
+      <!-- PHONE -->
+      <div id="app-phone" class="app-page">
+        <div id="phone-dial">
+          <div class="app-header">Phone</div>
+          <div class="dial-display" id="dial-display">&nbsp;</div>
+          <div class="dial-grid">
+            <button onclick="dialPress('1')">1</button><button onclick="dialPress('2')">2</button><button onclick="dialPress('3')">3</button>
+            <button onclick="dialPress('4')">4</button><button onclick="dialPress('5')">5</button><button onclick="dialPress('6')">6</button>
+            <button onclick="dialPress('7')">7</button><button onclick="dialPress('8')">8</button><button onclick="dialPress('9')">9</button>
+            <button onclick="dialPress('*')">*</button><button onclick="dialPress('0')">0</button><button onclick="dialPress('#')">#</button>
+          </div>
+          <div class="call-actions">
+            <button class="call-btn call-green" onclick="placeCall()">📞</button>
+            <button class="call-btn" style="background:#888;" onclick="dialBackspace()">⌫</button>
+          </div>
+        </div>
+        <div id="phone-calling" class="calling-view" style="display:none;">
+          <div style="font-size:14px; color:#666;">Calling…</div>
+          <div style="font-size:20px; margin:10px 0;" id="calling-number"></div>
+          <div id="call-timer" style="color:#999; font-size:12px;">00:00</div>
+          <button class="call-btn call-red" style="margin-top:30px;" onclick="hangUp()">📵</button>
+        </div>
+      </div>
+
+      <!-- CONTACTS -->
+      <div id="app-contacts" class="app-page">
+        <div class="app-header">Contacts</div>
+        <div id="contacts-list"></div>
+      </div>
+
+      <!-- MAPS -->
+      <div id="app-maps" class="app-page">
+        <div class="app-header" style="background:#3b8e3b;">Maps</div>
+        <iframe style="width:100%; height:calc(100% - 32px); border:none;" src="https://www.openstreetmap.org/export/embed.html?bbox=-122.09,37.41,-122.07,37.43&layer=mapnik&marker=37.422,-122.084"></iframe>
+      </div>
+
+      <!-- CAMERA -->
+      <div id="app-camera" class="app-page">
+        <div class="camera-app">
+          <div class="viewfinder" id="viewfinder"><div class="flash-overlay" id="flash"></div></div>
+          <div class="shutter-row"><button class="shutter-btn" onclick="takePhoto()"></button></div>
+        </div>
+      </div>
+
+      <!-- GMAIL -->
+      <div id="app-gmail" class="app-page">
+        <div id="gmail-list">
+          <div class="app-header gmail-header">Gmail</div>
+          <div id="mail-rows"></div>
+        </div>
+        <div id="gmail-read" style="display:none;">
+          <div class="app-header gmail-header" onclick="showMailList()" style="cursor:pointer;">← Inbox</div>
+          <div class="mail-read-view" id="mail-read-content"></div>
+        </div>
+      </div>
+
+      <!-- IM -->
+      <div id="app-im" class="app-page">
+        <div id="im-list">
+          <div class="app-header im-header">IM</div>
+          <div id="buddy-rows"></div>
+        </div>
+        <div id="im-chat" style="display:none; height:100%; display:flex; flex-direction:column;">
+          <div class="app-header im-header" onclick="showBuddyList()" style="cursor:pointer;" id="chat-title">← Buddies</div>
+          <div class="chat-log" id="chat-log"></div>
+          <div class="chat-input-row">
+            <input id="chat-input" placeholder="Tap keyboard tab to type…" onfocus="setActiveField(this)">
+            <button onclick="sendChat()">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- AMAZON MP3 -->
+      <div id="app-amazonmp3" class="app-page">
+        <div class="app-header amz-header">Amazon MP3</div>
+        <div id="amz-rows"></div>
+        <div id="amz-player"></div>
+      </div>
+
+      <!-- PICTURES -->
+      <div id="app-pictures" class="app-page">
+        <div id="pictures-grid">
+          <div class="app-header" style="background:#555;">Pictures</div>
+          <div class="pic-grid" id="pic-grid"></div>
+        </div>
+        <div id="pictures-viewer" style="display:none;">
+          <div class="pic-viewer">
+            <div id="pic-large" style="width:200px; height:200px; margin-bottom:14px;"></div>
+            <button class="hwbtn" style="width:auto; padding:6px 14px;" onclick="closeViewer()">← Back</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALARM CLOCK -->
+      <div id="app-alarm" class="app-page">
+        <div class="app-header" style="background:#444;">Alarm Clock</div>
+        <div style="text-align:center; padding:14px; font-size:26px; font-family:monospace;" id="alarm-bigclock">00:00:00</div>
+        <div id="alarm-rows"></div>
+        <button class="market-btn" style="margin:12px; width:calc(100% - 24px);" onclick="addAlarm()">+ Add alarm</button>
+      </div>
+
+      <!-- MARKET -->
+      <div id="app-market" class="app-page">
+        <div class="market-header app-header">Android Market</div>
+        <div class="market-item"><div><strong>Notepad</strong><br><small style="color:#777;">Simple text note-taking utility</small></div><div id="m-actions-notes"><button class="market-btn" onclick="installApp('notes','📝','Notepad')">Install</button></div></div>
+        <div class="market-item"><div><strong>Doodle Paint</strong><br><small style="color:#777;">Finger-paint sketch app</small></div><div id="m-actions-paint"><button class="market-btn" onclick="installApp('paint','🎨','Paint')">Install</button></div></div>
+        <div class="market-item"><div><strong>Snake</strong><br><small style="color:#777;">Classic grid arcade game</small></div><div id="m-actions-snake"><button class="market-btn" onclick="installApp('snake','🐍','Snake')">Install</button></div></div>
+        <div class="market-item"><div><strong>Task Killer</strong><br><small style="color:#777;">Force-stops running apps to free memory</small></div><div id="m-actions-killer"><button class="market-btn" onclick="installApp('killer','🚫','Killer')">Install</button></div></div>
+      </div>
+
+      <!-- NOTEPAD (installable) -->
+      <div id="app-notes" class="app-page">
+        <div class="app-header" style="background:#b8860b;">Notepad</div>
+        <div style="padding:10px; height:calc(100% - 60px); display:flex; flex-direction:column;">
+          <textarea id="note-buffer" onfocus="setActiveField(this)" style="flex:1; resize:none; padding:8px; font-size:13px;" placeholder="Tap the keyboard tab on the right edge, then type…"></textarea>
+          <button class="market-btn" style="margin-top:8px;" onclick="saveNote()">Save note</button>
+        </div>
+      </div>
+
+      <!-- PAINT (installable) -->
+      <div id="app-paint" class="app-page">
+        <div class="app-header" style="background:#8e44ad;">Doodle Paint<button style="float:right;" onclick="clearCanvas()">Wipe</button></div>
+        <canvas id="paintCanvas" style="width:100%; height:calc(100% - 32px); background:#fff;"></canvas>
+      </div>
+
+      <!-- SNAKE (installable) -->
+      <div id="app-snake" class="app-page" style="background:#111;">
+        <div class="app-header" style="background:#1a661a;">Snake — Score: <span id="snake-score">0</span></div>
+        <div style="display:flex; flex-direction:column; align-items:center; padding-top:8px;">
+          <canvas id="snakeCanvas" width="220" height="220" style="background:#000; border:2px solid #333;"></canvas>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); width:120px; gap:5px; margin-top:10px;">
+            <div></div><button class="hwbtn" style="width:100%;" onclick="changeSnakeDir('UP')">▲</button><div></div>
+            <button class="hwbtn" style="width:100%;" onclick="changeSnakeDir('LEFT')">◀</button><div></div><button class="hwbtn" style="width:100%;" onclick="changeSnakeDir('RIGHT')">▶</button>
+            <div></div><button class="hwbtn" style="width:100%;" onclick="changeSnakeDir('DOWN')">▼</button><div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASK KILLER (installable) -->
+      <div id="app-killer" class="app-page">
+        <div class="app-header" style="background:#c0392b;">Task Killer</div>
+        <div style="padding:10px; font-size:12px;" id="killer-list"></div>
+        <button class="market-btn" style="margin:10px; width:calc(100% - 20px); background:#c0392b;" onclick="killAll()">Kill all running apps</button>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="app-settings" class="app-page">
+        <div id="settings-main-page">
+          <div class="app-header settings-header">Settings</div>
+          <div class="settings-row" onclick="switchSettingsPanel('display')"><span>Wallpaper</span><span>›</span></div>
+          <div class="settings-row" onclick="switchSettingsPanel('sound')"><span>Sound &amp; display</span><span>›</span></div>
+          <div class="settings-row" onclick="switchSettingsPanel('wireless')"><span>Wireless controls</span><span>›</span></div>
+          <div class="settings-row" onclick="switchSettingsPanel('about')"><span>About phone</span><span>›</span></div>
+        </div>
+        <div id="settings-display" class="settings-panel">
+          <button class="back-settings" onclick="switchSettingsPanel('main')">‹ Back</button>
+          <div style="padding:10px;"><h4>Wallpaper</h4>
+            <button class="market-btn" style="display:block;width:100%;margin-bottom:8px;" onclick="setBg('#0c1f0c')">Android Green</button>
+            <button class="market-btn" style="display:block;width:100%;margin-bottom:8px;" onclick="setBg('#0a1830')">Cosmos Blue</button>
+            <button class="market-btn" style="display:block;width:100%;margin-bottom:8px;" onclick="setBg('#1a1a1a')">Charcoal</button>
+          </div>
+        </div>
+        <div id="settings-sound" class="settings-panel">
+          <button class="back-settings" onclick="switchSettingsPanel('main')">‹ Back</button>
+          <div style="padding:10px;">
+            <h4>Ringer volume</h4>
+            <input type="range" min="0" max="100" value="70" style="width:100%;">
+            <h4>Brightness</h4>
+            <input type="range" min="10" max="100" value="100" style="width:100%;" oninput="adjustBrightness(this.value)">
+            <h4 style="margin-top:14px;">Silent mode</h4>
+            <button class="market-btn" id="sound-btn" onclick="toggleMuteState()">Turn on silent mode</button>
+          </div>
+        </div>
+        <div id="settings-wireless" class="settings-panel">
+          <button class="back-settings" onclick="switchSettingsPanel('main')">‹ Back</button>
+          <div style="padding:10px; font-size:12px;">
+            <div class="settings-row"><span>Wi-Fi</span><input type="checkbox" checked></div>
+            <div class="settings-row"><span>Bluetooth</span><input type="checkbox"></div>
+            <div class="settings-row"><span>Mobile network (T-Mobile)</span><input type="checkbox" checked></div>
+          </div>
+        </div>
+        <div id="settings-about" class="settings-panel">
+          <button class="back-settings" onclick="switchSettingsPanel('main')">‹ Back</button>
+          <div style="padding:14px; font-size:12px; line-height:1.7;">
+            <strong>Model:</strong> T-Mobile G1 (HTC Dream)<br>
+            <strong>Firmware version:</strong> Android 1.0<br>
+            <strong>Build number:</strong> RC29<br>
+            <strong>Kernel version:</strong> 2.6.25<br>
+            <strong>Carrier:</strong> T-Mobile USA<br>
+            <strong>Released:</strong> October 22, 2008
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /app-window -->
+
+    <div id="brightness-overlay" style="position:absolute; inset:0; background:#000; opacity:0; pointer-events:none; z-index:999;"></div>
+    <div id="toast"></div>
+
+    <!-- slide-out keyboard tray -->
+    <div id="kb-tab" onclick="toggleKeyboard()">SLIDE</div>
+  </div>
+
+  <div id="kb-panel">
+    <div class="kb-row"><button class="kb-key" onclick="typeKey('q')">q</button><button class="kb-key" onclick="typeKey('w')">w</button><button class="kb-key" onclick="typeKey('e')">e</button><button class="kb-key" onclick="typeKey('r')">r</button><button class="kb-key" onclick="typeKey('t')">t</button><button class="kb-key" onclick="typeKey('y')">y</button><button class="kb-key" onclick="typeKey('u')">u</button><button class="kb-key" onclick="typeKey('i')">i</button><button class="kb-key" onclick="typeKey('o')">o</button><button class="kb-key" onclick="typeKey('p')">p</button></div>
+    <div class="kb-row"><button class="kb-key" onclick="typeKey('a')">a</button><button class="kb-key" onclick="typeKey('s')">s</button><button class="kb-key" onclick="typeKey('d')">d</button><button class="kb-key" onclick="typeKey('f')">f</button><button class="kb-key" onclick="typeKey('g')">g</button><button class="kb-key" onclick="typeKey('h')">h</button><button class="kb-key" onclick="typeKey('j')">j</button><button class="kb-key" onclick="typeKey('k')">k</button><button class="kb-key" onclick="typeKey('l')">l</button></div>
+    <div class="kb-row"><button class="kb-key" onclick="typeKey('z')">z</button><button class="kb-key" onclick="typeKey('x')">x</button><button class="kb-key" onclick="typeKey('c')">c</button><button class="kb-key" onclick="typeKey('v')">v</button><button class="kb-key" onclick="typeKey('b')">b</button><button class="kb-key" onclick="typeKey('n')">n</button><button class="kb-key" onclick="typeKey('m')">m</button><button class="kb-key wide" onclick="typeKey('back')">⌫</button></div>
+    <div class="kb-row"><button class="kb-key wide" onclick="typeKey('sym')">SYM</button><button class="kb-key" onclick="typeKey(',')">,</button><button class="kb-key wide" style="max-width:80px; flex:3;" onclick="typeKey(' ')">space</button><button class="kb-key" onclick="typeKey('.')">.</button><button class="kb-key wide" onclick="typeKey('enter')">↵</button></div>
+  </div>
+
+  <!-- ===== PHYSICAL CHIN ===== -->
+  <div id="chin">
+    <div id="chin-row">
+      <button class="hwbtn green" onclick="callButton()">CALL</button>
+      <button class="hwbtn" onclick="menuPress()">MENU</button>
+      <div id="trackball" onclick="trackballClick()" title="trackball"></div>
+      <button class="hwbtn" onclick="goHome()">HOME</button>
+      <button class="hwbtn" onclick="backPress()">BACK</button>
+      <button class="hwbtn red" onclick="endCallButton()">END</button>
+    </div>
+    <div id="chin-label">T-MOBILE G1 · ANDROID 1.0</div>
+  </div>
 </div>
 
 <script>
-    // --- BASIC LIFE RUNTIME HARDWARE CLOCK SYNCHRONIZATION ---
-    function updateTime() {
-        const now = new Date();
-        let hours = now.getHours();
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12 || 12; 
-        
-        document.getElementById('time').innerText = hours + ":" + minutes + " " + ampm;
-        if(document.getElementById('big-time')) {
-            document.getElementById('big-time').innerText = hours + ":" + minutes + ":" + seconds + " " + ampm;
-        }
-    }
-    setInterval(updateTime, 1000);
-    updateTime();
+/* ============ CLOCK ============ */
+function updateClock(){
+  const now=new Date();
+  let h=now.getHours(); const m=now.getMinutes().toString().padStart(2,'0'); const s=now.getSeconds().toString().padStart(2,'0');
+  const ap=h>=12?'PM':'AM'; h=h%12||12;
+  document.getElementById('time').innerText=h+':'+m+' '+ap;
+  const big=document.getElementById('alarm-bigclock');
+  if(big) big.innerText=h+':'+m+':'+s+' '+ap;
+}
+setInterval(updateClock,1000); updateClock();
 
-    // --- DRAWER ANIMATION CONTROLLERS ---
-    function toggleDrawer() {
-        const drw = document.getElementById('drawer');
-        drw.classList.toggle('open');
-        document.getElementById('handle').innerText = drw.classList.contains('open') ? '▼ Close' : '▲ Menu';
-    }
+/* ============ APP STATE / NAV ============ */
+let appWindowOpen=false;
+let appState={app:null, view:null};
+let currentPane=0;
 
-    // --- APPLICATION ROUTING SWITCH INTERFACE ENGINE ---
-    function openApp(appId) {
-        document.querySelectorAll('.app-page').forEach(p => p.style.display = 'none');
-        document.getElementById('app-window').style.display = "block";
-        document.getElementById('app-' + appId).style.display = "block";
-        
-        document.getElementById('drawer').classList.remove('open');
-        document.getElementById('handle').innerText = '▲ Menu';
-        
-        if(appId === 'paint') initPaintEngine();
-        if(appId === 'notes') loadNote();
-        if(appId === 'snake') startSnakeGame();
-        if(appId === 'killer') updateTaskManagerUI();
-    }
+function openApp(id){
+  document.querySelectorAll('.app-page').forEach(p=>p.style.display='none');
+  document.getElementById('app-window').style.display='block';
+  document.getElementById('app-'+id).style.display='block';
+  appWindowOpen=true;
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('home-menu').classList.remove('open');
+  appState={app:id, view:'default'};
 
-    function goHome() {
-        document.getElementById('app-window').style.display = "none";
-        stopSnakeGame();
-    }
+  if(id==='phone'){ showDialView(); }
+  if(id==='contacts'){ renderContacts(); }
+  if(id==='gmail'){ renderMail(); showMailList(); }
+  if(id==='im'){ renderBuddies(); showBuddyList(); }
+  if(id==='amazonmp3'){ renderAmazon(); }
+  if(id==='pictures'){ renderPictures(); showPicGrid(); }
+  if(id==='alarm'){ renderAlarms(); }
+  if(id==='settings'){ switchSettingsPanel('main'); }
+  if(id==='paint'){ initPaintEngine(); }
+  if(id==='snake'){ startSnakeGame(); }
+  if(id==='killer'){ renderKiller(); }
+}
+function goHome(){
+  document.getElementById('app-window').style.display='none';
+  appWindowOpen=false; appState={app:null,view:null};
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('home-menu').classList.remove('open');
+  stopSnakeGame();
+}
+function toggleDrawer(){
+  const d=document.getElementById('drawer');
+  d.classList.toggle('open');
+  document.getElementById('drawer-tab').innerText = d.classList.contains('open') ? '▼ Close' : '▲ All apps';
+}
+function toggleShade(){ document.getElementById('shade').classList.toggle('open'); }
+function clearNotifications(){
+  document.getElementById('shade-gmail').innerText='📧 Gmail — no new mail';
+  document.getElementById('shade-im').innerText='💬 IM — no new messages';
+  document.getElementById('shade').classList.remove('open');
+}
 
-    // --- SYNTHESIZED MUSIC PLAYER CORE DRIVER ---
-    let audioCtx = null;
-    let musicTimer = null;
-    let synthTimer = null;
-    let isMusicPlaying = false;
-    let musicTimeTracker = 0;
-    let activeTrackIndex = 0;
+/* ===== HOME PANES (swipe) ===== */
+let dragStartX=null;
+const panesEl=document.getElementById('panes');
+document.getElementById('home').addEventListener('touchstart',e=>{dragStartX=e.touches[0].clientX;});
+document.getElementById('home').addEventListener('touchend',e=>{
+  if(dragStartX===null) return;
+  const dx=e.changedTouches[0].clientX-dragStartX;
+  if(dx<-30) setPane(currentPane+1);
+  else if(dx>30) setPane(currentPane-1);
+  dragStartX=null;
+});
+function setPane(n){
+  currentPane=Math.max(0,Math.min(2,n));
+  panesEl.style.transform='translateX(-'+(currentPane*33.333)+'%)';
+  document.querySelectorAll('#dots span').forEach((d,i)=>d.classList.toggle('active',i===currentPane));
+}
 
-    const trackDatabase = [
-        { title: 'Retro Synths Loop', artist: 'Android System Engine', duration: 45, chords: [261.63, 329.63, 392.00, 523.25, 349.23, 440.00, 392.00, 293.66] },
-        { title: 'Pixel Pulse Wave', artist: '8-Bit Hero', duration: 30, chords: [440.00, 493.88, 523.25, 587.33, 523.25, 493.88, 440.00, 392.00] },
-        { title: 'Astro Dream Melody', artist: 'HTC Design Labs', duration: 60, chords: [329.63, 392.00, 440.00, 392.00, 329.63, 261.63, 293.66, 261.63] }
-    ];
+/* ===== HARDWARE BUTTONS ===== */
+function callButton(){ openApp('phone'); }
+function endCallButton(){
+  if(appState.app==='phone' && appState.view==='calling'){ hangUp(); }
+  else goHome();
+}
+function menuPress(){
+  if(!appWindowOpen){ document.getElementById('home-menu').classList.toggle('open'); }
+  else { showToast('No options for this screen'); }
+}
+function closeHomeMenu(){ document.getElementById('home-menu').classList.remove('open'); }
+function backPress(){
+  document.getElementById('home-menu').classList.remove('open');
+  if(!appWindowOpen) return;
+  const a=appState.app, v=appState.view;
+  if(a==='phone' && v==='calling'){ hangUp(); return; }
+  if(a==='gmail' && v==='read'){ showMailList(); return; }
+  if(a==='im' && v==='chat'){ showBuddyList(); return; }
+  if(a==='pictures' && v==='viewer'){ closeViewer(); return; }
+  if(a==='settings' && v!=='default' && v!=='main'){ switchSettingsPanel('main'); return; }
+  goHome();
+}
+function trackballClick(){
+  if(!appWindowOpen){ setPane(currentPane+1>2?0:currentPane+1); return; }
+  const win=document.getElementById('app-window');
+  const visible=[...document.querySelectorAll('.app-page')].find(p=>p.style.display==='block');
+  if(visible) visible.scrollTop += 50;
+}
 
-    function initAudioSandbox() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-    }
+/* ===== TOAST ===== */
+function showToast(msg){
+  const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block';
+  clearTimeout(window._toastT); window._toastT=setTimeout(()=>t.style.display='none',1400);
+}
 
-    function triggerSynthAudioNode() {
-        if (!isMusicPlaying || !audioCtx || isMuted) return;
-        try {
-            let osc = audioCtx.createOscillator();
-            let gainNode = audioCtx.createGain();
-            
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            let currentTrack = trackDatabase[activeTrackIndex];
-            let tonePointer = Math.floor(musicTimeTracker * 2) % currentTrack.chords.length;
-            
-            osc.frequency.value = currentTrack.chords[tonePointer];
-            osc.type = 'triangle'; // Retro vintage flavor
-            
-            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.38);
-        } catch(e) {}
-    }
+/* ===== SLIDE-OUT KEYBOARD ===== */
+let kbOpen=false; let activeField=null;
+function toggleKeyboard(){
+  kbOpen=!kbOpen;
+  document.getElementById('kb-panel').classList.toggle('open',kbOpen);
+  document.getElementById('screen-wrap').classList.toggle('slid',kbOpen);
+}
+function setActiveField(el){ activeField=el; }
+function typeKey(k){
+  if(!activeField) return;
+  if(k==='back'){ activeField.value=activeField.value.slice(0,-1); return; }
+  if(k==='sym'){ return; }
+  if(k==='enter'){
+    if(activeField.id==='chat-input') sendChat();
+    else if(activeField.id==='gsearch-input') browseSearch();
+    return;
+  }
+  activeField.value += k;
+}
 
-    function selectTrack(idx) {
-        initAudioSandbox();
-        activeTrackIndex = idx;
-        musicTimeTracker = 0;
-        
-        document.getElementById('music-list-view').style.display = 'none';
-        document.getElementById('music-player-view').style.display = 'block';
-        
-        updatePlayerUIMatrix();
-        if(!isMusicPlaying) toggleMusicPlay();
-    }
+/* ===== PHONE / DIALER ===== */
+let dialBuffer='';
+function showDialView(){
+  document.getElementById('phone-dial').style.display='block';
+  document.getElementById('phone-calling').style.display='none';
+  appState.view='dial';
+}
+function dialPress(d){ dialBuffer+=d; document.getElementById('dial-display').innerText=dialBuffer || '\u00A0'; }
+function dialBackspace(){ dialBuffer=dialBuffer.slice(0,-1); document.getElementById('dial-display').innerText=dialBuffer || '\u00A0'; }
+let callTimerInt;
+function placeCall(){
+  if(!dialBuffer){ showToast('Enter a number first'); return; }
+  document.getElementById('phone-dial').style.display='none';
+  document.getElementById('phone-calling').style.display='block';
+  document.getElementById('calling-number').innerText=dialBuffer;
+  appState.view='calling';
+  let secs=0;
+  callTimerInt=setInterval(()=>{ secs++; const m=String(Math.floor(secs/60)).padStart(2,'0'); const s=String(secs%60).padStart(2,'0'); document.getElementById('call-timer').innerText=m+':'+s; },1000);
+}
+function hangUp(){
+  clearInterval(callTimerInt);
+  dialBuffer='';
+  showDialView();
+  showToast('Call ended');
+}
 
-    function showMusicList() {
-        document.getElementById('music-list-view').style.display = 'block';
-        document.getElementById('music-player-view').style.display = 'none';
-    }
+/* ===== CONTACTS ===== */
+const contacts=[
+  {name:'Andy Rubin', num:'(650) 555-0142'},
+  {name:'Rich Miner', num:'(415) 555-0199'},
+  {name:'T-Mobile Support', num:'1-800-937-8997'},
+  {name:'Mom', num:'(213) 555-0110'},
+  {name:'Sergey @ Google', num:'(650) 555-0173'}
+];
+function renderContacts(){
+  document.getElementById('contacts-list').innerHTML=contacts.map(c=>
+    `<div class="contact-row" onclick="callFromContact('${c.num}')">
+      <div class="avatar">${c.name[0]}</div>
+      <div><div>${c.name}</div><small style="color:#777;">${c.num}</small></div>
+    </div>`).join('');
+}
+function callFromContact(num){
+  openApp('phone'); dialBuffer=num.replace(/[^0-9]/g,''); document.getElementById('dial-display').innerText=dialBuffer;
+}
 
-    function updatePlayerUIMatrix() {
-        const track = trackDatabase[activeTrackIndex];
-        document.getElementById('music-title').innerText = track.title;
-        document.getElementById('music-artist').innerText = track.artist;
-        document.getElementById('music-time-total').innerText = formatTimeStrings(track.duration);
-        document.getElementById('music-time-current').innerText = formatTimeStrings(musicTimeTracker);
-        document.getElementById('music-progress').value = (musicTimeTracker / track.duration) * 100;
-        document.getElementById('music-play-btn').innerText = isMusicPlaying ? '⏸' : '▶';
-    }
+/* ===== BROWSER ===== */
+function focusSearch(){ setTimeout(()=>{ const i=document.getElementById('gsearch-input'); if(i){ i.focus(); setActiveField(i); } },50); }
+function browseSearch(){
+  const q=document.getElementById('gsearch-input').value;
+  document.getElementById('browser-view').innerHTML=`
+    <h4>Results for "${q}"</h4><hr>
+    <p><strong>Android Developers Blog</strong><br>Notes on the 1.0 SDK release and building apps for the platform.</p>
+    <p><strong>T-Mobile G1 — Official Site</strong><br>Specs, support and accessories for the G1.</p>
+    <button class="market-btn" onclick="resetBrowser()">New search</button>`;
+}
+function resetBrowser(){
+  document.getElementById('browser-view').innerHTML=`
+    <h2 style="margin-top:30px; text-align:center;">Google</h2>
+    <input id="gsearch-input" class="gsc-input" placeholder="Search the web" onfocus="setActiveField(this)">
+    <button class="market-btn" style="width:100%;" onclick="browseSearch()">Google Search</button>`;
+}
 
-    function formatTimeStrings(totalSecs) {
-        let mins = Math.floor(totalSecs / 60);
-        let secs = Math.floor(totalSecs % 60).toString().padStart(2, '0');
-        return mins + ":" + secs;
-    }
+/* ===== GMAIL ===== */
+const mails=[
+  {from:'Google Calendar', subj:'Invitation: Android launch event', unread:true, body:'You have been invited to "Android launch event" — Sept 23, 2008, 10:00 AM.'},
+  {from:'Android Market', subj:'Receipt: Doodle Paint', unread:true, body:'Thanks for your purchase. This app was free.'},
+  {from:'T-Mobile', subj:'Welcome to T-Mobile myFaves', unread:false, body:'Thanks for activating your G1. Dial #999# for balance.'}
+];
+function renderMail(){
+  document.getElementById('mail-rows').innerHTML=mails.map((m,i)=>
+    `<div class="mail-row ${m.unread?'unread':''}" onclick="readMail(${i})">
+      <div class="from">${m.from}</div><div>${m.subj}</div>
+    </div>`).join('');
+}
+function readMail(i){
+  mails[i].unread=false;
+  document.getElementById('mail-read-content').innerHTML=`<strong>${mails[i].from}</strong><br><em>${mails[i].subj}</em><hr>${mails[i].body}`;
+  document.getElementById('gmail-list').style.display='none';
+  document.getElementById('gmail-read').style.display='block';
+  appState.view='read';
+  renderMail();
+  updateNotifDots();
+}
+function showMailList(){
+  document.getElementById('gmail-list').style.display='block';
+  document.getElementById('gmail-read').style.display='none';
+  appState.view='list';
+}
 
-    function toggleMusicPlay() {
-        initAudioSandbox();
-        isMusicPlaying = !isMusicPlaying;
-        
-        if (isMusicPlaying) {
-            // Processing time counters
-            musicTimer = setInterval(() => {
-                const currentTrack = trackDatabase[activeTrackIndex];
-                musicTimeTracker++;
-                if (musicTimeTracker > currentTrack.duration) {
-                    nextTrack();
-                } else {
-                    updatePlayerUIMatrix();
-                }
-            }, 1000);
-            
-            // Fast sequencer loop for musical chiptune feedback
-            synthTimer = setInterval(triggerSynthAudioNode, 400);
-        } else {
-            clearInterval(musicTimer);
-            clearInterval(synthTimer);
-        }
-        updatePlayerUIMatrix();
-    }
+/* ===== IM ===== */
+const buddies=[
+  {name:'larry.p', status:'online'},
+  {name:'sergey.b', status:'away'},
+  {name:'eric.s', status:'offline'}
+];
+let chatPartner=null;
+function renderBuddies(){
+  document.getElementById('buddy-rows').innerHTML=buddies.map(b=>
+    `<div class="buddy-row" onclick="openChat('${b.name}')"><span class="dot ${b.status}"></span>${b.name}</div>`).join('');
+}
+function openChat(name){
+  chatPartner=name;
+  document.getElementById('chat-title').innerText='← '+name;
+  document.getElementById('chat-log').innerHTML=`<div class="bubble them">hey, you on the G1 yet?</div>`;
+  document.getElementById('im-list').style.display='none';
+  document.getElementById('im-chat').style.display='flex';
+  appState.view='chat';
+}
+function showBuddyList(){
+  document.getElementById('im-list').style.display='block';
+  document.getElementById('im-chat').style.display='none';
+  appState.view='list';
+}
+function sendChat(){
+  const input=document.getElementById('chat-input');
+  if(!input.value.trim()) return;
+  const log=document.getElementById('chat-log');
+  log.innerHTML+=`<div class="bubble me">${input.value}</div>`;
+  const msg=input.value; input.value='';
+  log.scrollTop=log.scrollHeight;
+  setTimeout(()=>{
+    log.innerHTML+=`<div class="bubble them">lol nice — "${msg.slice(0,20)}"</div>`;
+    log.scrollTop=log.scrollHeight;
+  },700);
+}
 
-    function seekMusic(val) {
-        const track = trackDatabase[activeTrackIndex];
-        musicTimeTracker = Math.floor((val / 100) * track.duration);
-        updatePlayerUIMatrix();
-    }
+/* ===== AMAZON MP3 ===== */
+const amzTracks=[
+  {title:'Open Field Stroll', artist:'Field Recordings Collective', price:'$0.99', chords:[261.63,329.63,392.00,523.25]},
+  {title:'Wire & Static', artist:'Lo-Fi Bedroom Project', price:'$0.99', chords:[440.00,493.88,523.25,392.00]},
+  {title:'Midnight Transit', artist:'Public Domain Sessions', price:'$1.29', chords:[329.63,392.00,440.00,293.66]}
+];
+let amzBought={};
+let audioCtx=null;
+function renderAmazon(){
+  document.getElementById('amz-rows').innerHTML=amzTracks.map((t,i)=>
+    `<div class="track-row"><div><strong>${t.title}</strong><br><small style="color:#777;">${t.artist}</small></div>
+      <div>
+        <button class="amz-btn" onclick="previewTrack(${i})">▶ Preview</button>
+        ${amzBought[i] ? '<span class="amz-bought">Purchased</span>' : `<button class="amz-btn" onclick="buyTrack(${i})">${t.price}</button>`}
+      </div></div>`).join('');
+}
+function buyTrack(i){ amzBought[i]=true; renderAmazon(); showToast('Downloading over Wi‑Fi…'); }
+function previewTrack(i){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  const t=amzTracks[i];
+  const player=document.getElementById('amz-player');
+  player.style.display='block'; player.innerText='▶ Previewing: '+t.title+' — '+t.artist;
+  let idx=0;
+  const iv=setInterval(()=>{
+    if(idx>=t.chords.length){ clearInterval(iv); player.style.display='none'; return; }
+    const osc=audioCtx.createOscillator(); const g=audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.frequency.value=t.chords[idx]; osc.type='triangle';
+    g.gain.setValueAtTime(0.08,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.5);
+    osc.start(); osc.stop(audioCtx.currentTime+0.5);
+    idx++;
+  },550);
+}
 
-    function nextTrack() {
-        musicTimeTracker = 0;
-        activeTrackIndex = (activeTrackIndex + 1) % trackDatabase.length;
-        updatePlayerUIMatrix();
-        if(!isMusicPlaying) toggleMusicPlay();
-    }
+/* ===== PICTURES ===== */
+let photos=[];
+function renderPictures(){
+  document.getElementById('pic-grid').innerHTML = photos.length
+    ? photos.map((c,i)=>`<div class="pic-cell" style="background:${c};" onclick="viewPic(${i})">🖼️</div>`).join('')
+    : `<div style="grid-column:1/-1; text-align:center; color:#999; padding:30px; font-size:12px;">No pictures yet — try the Camera</div>`;
+}
+function showPicGrid(){ document.getElementById('pictures-grid').style.display='block'; document.getElementById('pictures-viewer').style.display='none'; appState.view='grid'; }
+function viewPic(i){
+  document.getElementById('pic-large').style.background=photos[i];
+  document.getElementById('pictures-grid').style.display='none';
+  document.getElementById('pictures-viewer').style.display='block';
+  appState.view='viewer';
+}
+function closeViewer(){ showPicGrid(); }
 
-    function prevTrack() {
-        musicTimeTracker = 0;
-        activeTrackIndex = (activeTrackIndex - 1 + trackDatabase.length) % trackDatabase.length;
-        updatePlayerUIMatrix();
-        if(!isMusicPlaying) toggleMusicPlay();
-    }
+/* ===== CAMERA ===== */
+function takePhoto(){
+  const flash=document.getElementById('flash');
+  flash.style.transition='none'; flash.style.opacity='1';
+  setTimeout(()=>{ flash.style.transition='opacity .3s'; flash.style.opacity='0'; },60);
+  const hue=Math.floor(Math.random()*360);
+  photos.push(`hsl(${hue},55%,45%)`);
+  showToast('Photo saved to Pictures');
+}
 
+/* ===== ALARM CLOCK ===== */
+let alarms=[{time:'07:00', on:true},{time:'08:30', on:false}];
+function renderAlarms(){
+  document.getElementById('alarm-rows').innerHTML=alarms.map((a,i)=>
+    `<div class="alarm-row"><span>${a.time}</span>
+      <input type="checkbox" ${a.on?'checked':''} onchange="alarms[${i}].on=this.checked"></div>`).join('');
+}
+function addAlarm(){
+  const t=prompt('Set alarm time (HH:MM)','06:30');
+  if(t){ alarms.push({time:t, on:true}); renderAlarms(); }
+}
 
-    // --- SETTINGS APPLICATION NESTED DIRECTORY ENGINE ---
-    function switchSettingsPanel(panelId) {
-        document.getElementById('settings-main-page').style.display = (panelId === 'main') ? 'block' : 'none';
-        document.querySelectorAll('.settings-panel').forEach(p => p.style.display = 'none');
-        if(panelId !== 'main') {
-            document.getElementById('settings-' + panelId).style.display = 'block';
-        }
-    }
-    function adjustBrightness(val) {
-        document.getElementById('brightness-overlay').style.opacity = (100 - val) / 100;
-    }
-    let isMuted = false;
-    function toggleMuteState() {
-        isMuted = !isMuted;
-        document.getElementById('sound-indicator').innerText = isMuted ? '🔇 3G █ 100%' : '🔊 3G █ 100%';
-        document.getElementById('sound-btn').innerText = isMuted ? "Activate Alert Streams" : "Toggle Silent Mode";
-    }
-    function setBg(color) {
-        document.getElementById('desktop').style.background = 'linear-gradient(to bottom, ' + color + ', #000)';
-    }
+/* ===== MARKET / INSTALL ===== */
+const registry={};
+function installApp(id,icon,label){
+  registry[id]={icon,label};
+  document.getElementById('m-actions-'+id).innerHTML=`<button class="market-btn uninst" onclick="uninstallApp('${id}')">Uninstall</button>`;
+  const grid=document.getElementById('drawer-grid');
+  const div=document.createElement('div');
+  div.className='hicon'; div.id='draw-'+id;
+  div.innerHTML=`<div class="glyph">${icon}</div>${label}`;
+  div.onclick=()=>openApp(id);
+  grid.appendChild(div);
+  showToast(label+' installed');
+}
+function uninstallApp(id){
+  const info=registry[id]; delete registry[id];
+  document.getElementById('m-actions-'+id).innerHTML=`<button class="market-btn" onclick="installApp('${id}','${info.icon}','${info.label}')">Install</button>`;
+  document.getElementById('draw-'+id)?.remove();
+  goHome();
+}
 
-    // --- CALCULATOR ENGINE ---
-    function calcPress(v) {
-        const s = document.getElementById('calc-screen');
-        if(s.value === '0' || s.value === 'Error') s.value = v; else s.value += v;
-    }
-    function calcClear() { document.getElementById('calc-screen').value = '0'; }
-    function calcEval() {
-        const s = document.getElementById('calc-screen');
-        try { s.value = Function('"use strict";return (' + s.value + ')')(); } catch { s.value = "Error"; }
-    }
+/* ===== NOTEPAD ===== */
+let savedNote='';
+function saveNote(){ savedNote=document.getElementById('note-buffer').value; showToast('Note saved'); }
 
-    // --- SIMULATED WEB BROWSER INTERFACE ---
-    function browseSearch() {
-        const q = document.getElementById('search-input').value;
-        document.getElementById('browser-view').innerHTML = `
-            <h4>Results for: "${q}"</h4><hr>
-            <p><strong>1. Android Market Expands</strong><br>Developers are launching custom logic compilation frameworks for G1 devices.</p>
-            <p><strong>2. Snake Retro Classic Patch</strong><br>Play absolute grid-rendered calculations directly inside your system wrapper layer.</p>
-            <button onclick="document.getElementById('app-browser').innerHTML = document.getElementById('app-browser').innerHTML">Reset Browser</button>
-        `;
-    }
+/* ===== PAINT ===== */
+let drawing=false, pCanvas, pCtx;
+function initPaintEngine(){
+  pCanvas=document.getElementById('paintCanvas'); pCtx=pCanvas.getContext('2d');
+  pCanvas.width=pCanvas.clientWidth; pCanvas.height=pCanvas.clientHeight;
+  pCtx.strokeStyle='#1a3fa0'; pCtx.lineWidth=4; pCtx.lineCap='round';
+  pCanvas.onmousedown=e=>{drawing=true; pCtx.beginPath(); pCtx.moveTo(e.offsetX,e.offsetY);};
+  pCanvas.onmousemove=e=>{ if(drawing){ pCtx.lineTo(e.offsetX,e.offsetY); pCtx.stroke(); } };
+  window.onmouseup=()=>drawing=false;
+}
+function clearCanvas(){ if(pCtx) pCtx.clearRect(0,0,pCanvas.width,pCanvas.height); }
 
-    // --- ADVANCED PACKAGING COMPILATION: INSTALL / UNINSTALL MANAGER ---
-    const activeRegistry = {};
-    function installApp(id, icon, label) {
-        activeRegistry[id] = { icon: icon, label: label };
+/* ===== SNAKE ===== */
+let snakeInterval, sCanvas, sCtx, snake=[], food={}, dir='RIGHT', score=0;
+function startSnakeGame(){
+  sCanvas=document.getElementById('snakeCanvas'); sCtx=sCanvas.getContext('2d');
+  snake=[{x:60,y:60},{x:50,y:60},{x:40,y:60}]; dir='RIGHT'; score=0; spawnFood();
+  clearInterval(snakeInterval); snakeInterval=setInterval(runSnakeTick,150);
+}
+function stopSnakeGame(){ clearInterval(snakeInterval); }
+function changeSnakeDir(nd){
+  if(nd==='UP'&&dir!=='DOWN') dir='UP';
+  if(nd==='DOWN'&&dir!=='UP') dir='DOWN';
+  if(nd==='LEFT'&&dir!=='RIGHT') dir='LEFT';
+  if(nd==='RIGHT'&&dir!=='LEFT') dir='RIGHT';
+}
+function spawnFood(){ food={x:Math.floor(Math.random()*22)*10, y:Math.floor(Math.random()*22)*10}; }
+function runSnakeTick(){
+  let head=Object.assign({},snake[0]);
+  if(dir==='UP') head.y-=10; if(dir==='DOWN') head.y+=10;
+  if(dir==='LEFT') head.x-=10; if(dir==='RIGHT') head.x+=10;
+  if(head.x<0||head.x>=220||head.y<0||head.y>=220||snake.some(s=>s.x===head.x&&s.y===head.y)){
+    showToast('Game over — score '+score); startSnakeGame(); return;
+  }
+  snake.unshift(head);
+  if(head.x===food.x&&head.y===food.y){ score+=10; document.getElementById('snake-score').innerText=score; spawnFood(); }
+  else snake.pop();
+  sCtx.clearRect(0,0,220,220);
+  sCtx.fillStyle='#e74c3c'; sCtx.fillRect(food.x,food.y,10,10);
+  sCtx.fillStyle='#2ecc71'; snake.forEach(s=>sCtx.fillRect(s.x,s.y,9,9));
+}
 
-        document.getElementById('m-actions-' + id).innerHTML = `<button class="market-btn uninst" onclick="uninstallApp('${id}')">Uninstall</button>`;
+/* ===== TASK KILLER ===== */
+function renderKiller(){
+  const running=['com.android.phone','com.google.gmail','com.google.im','com.android.maps', ...Object.keys(registry).map(k=>'com.user.'+k)];
+  document.getElementById('killer-list').innerHTML=running.map(p=>
+    `<div class="process-row" style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;"><span>${p}</span><span style="color:#2e8b57;">Running</span></div>`).join('');
+}
+function killAll(){ showToast('Cleared background processes'); document.getElementById('killer-list').querySelectorAll('span:last-child').forEach(s=>{s.innerText='Killed'; s.style.color='#c0392b';}); }
 
-        const dIcon = document.createElement('div');
-        dIcon.className = "icon";
-        dIcon.id = "desk-shortcut-" + id;
-        dIcon.innerHTML = `${icon}<br>${label}`;
-        dIcon.onclick = () => openApp(id);
-        document.getElementById('desktop').appendChild(dIcon);
+/* ===== SETTINGS ===== */
+function switchSettingsPanel(panel){
+  document.getElementById('settings-main-page').style.display = panel==='main' ? 'block':'none';
+  document.querySelectorAll('.settings-panel').forEach(p=>p.style.display='none');
+  if(panel!=='main') document.getElementById('settings-'+panel).style.display='block';
+  appState.view = panel;
+}
+function adjustBrightness(v){ document.getElementById('brightness-overlay').style.opacity=(100-v)/100; }
+let isMuted=false;
+function toggleMuteState(){
+  isMuted=!isMuted;
+  document.getElementById('sound-btn').innerText = isMuted ? 'Turn off silent mode' : 'Turn on silent mode';
+  showToast(isMuted?'Silent mode on':'Silent mode off');
+}
+function setBg(c){ document.getElementById('home').style.background=c; }
 
-        const drIcon = document.createElement('div');
-        drIcon.className = "icon";
-        drIcon.id = "draw-shortcut-" + id;
-        drIcon.innerHTML = `${icon}<br>${label}`;
-        drIcon.onclick = () => openApp(id);
-        document.getElementById('drawer-grid').appendChild(drIcon);
-    }
+/* notif dots in status bar */
+function updateNotifDots(){
+  const unread=mails.filter(m=>m.unread).length;
+  document.getElementById('notif-icons').innerText = unread>0 ? '✉️'+unread : '';
+  document.getElementById('shade-gmail').innerText = unread>0 ? `📧 Gmail — ${unread} new message${unread>1?'s':''}` : '📧 Gmail — no new mail';
+}
+updateNotifDots();
 
-    function uninstallApp(id) {
-        const appInfo = activeRegistry[id];
-        delete activeRegistry[id];
+/* misc */
+function addShortcutPrompt(){ showToast('Drag an icon from All apps to add it here'); closeHomeMenu(); }
 
-        document.getElementById('m-actions-' + id).innerHTML = `<button class="market-btn" onclick="installApp('${id}', '${appInfo.icon}', '${appInfo.label}')">Install</button>`;
-
-        document.getElementById("desk-shortcut-" + id)?.remove();
-        document.getElementById("draw-shortcut-" + id)?.remove();
-
-        goHome();
-    }
-
-    // --- NOTES RUNTIME MECHANISM ---
-    function saveNote() {
-        localStorage.setItem('g1_sim_note', document.getElementById('note-buffer').value);
-        alert('Data write operation confirmed.');
-    }
-    function loadNote() {
-        document.getElementById('note-buffer').value = localStorage.getItem('g1_sim_note') || "";
-    }
-
-    // --- DOODLE PAINT CANVAS CONTROLLERS ---
-    let drawing = false; let pCanvas, pCtx;
-    function initPaintEngine() {
-        pCanvas = document.getElementById('paintCanvas'); pCtx = pCanvas.getContext('2d');
-        pCanvas.width = pCanvas.parentElement.clientWidth; pCanvas.height = pCanvas.parentElement.clientHeight - 40;
-        pCtx.strokeStyle = "#0000ff"; pCtx.lineWidth = 4; pCtx.lineCap = "round";
-
-        pCanvas.onmousedown = (e) => { drawing = true; pCtx.beginPath(); pCtx.moveTo(e.offsetX, e.offsetY); };
-        pCanvas.onmousemove = (e) => { if(drawing) { pCtx.lineTo(e.offsetX, e.offsetY); pCtx.stroke(); } };
-        window.onmouseup = () => drawing = false;
-    }
-    function clearCanvas() { if(pCtx) pCtx.clearRect(0,0,pCanvas.width,pCanvas.height); }
-
-    // --- SNAKE GAME ARCHITECTURAL RENDERING INTERFACE LOOP ---
-    let snakeInterval; let sCanvas, sCtx;
-    let snake = []; let food = {}; let dir = 'RIGHT'; let score = 0;
-    function startSnakeGame() {
-        sCanvas = document.getElementById('snakeCanvas'); sCtx = sCanvas.getContext('2d');
-        snake = [{x: 40, y: 40}, {x: 30, y: 40}, {x: 20, y: 40}];
-        dir = 'RIGHT'; score = 0; spawnFood();
-        clearInterval(snakeInterval);
-        snakeInterval = setInterval(runSnakeTick, 150);
-    }
-    function stopSnakeGame() { clearInterval(snakeInterval); }
-    function changeSnakeDir(nd) {
-        if(nd==='UP' && dir!=='DOWN') dir='UP';
-        if(nd==='DOWN' && dir!=='UP') dir='DOWN';
-        if(nd==='LEFT' && dir!=='RIGHT') dir='LEFT';
-        if(nd==='RIGHT' && dir!=='LEFT') dir='RIGHT';
-    }
-    function spawnFood() {
-        food = { x: Math.floor(Math.random()*20)*10, y: Math.floor(Math.random()*20)*10 };
-    }
-    function runSnakeTick() {
-        let head = Object.assign({}, snake[0]);
-        if(dir === 'UP') head.y -= 10; if(dir === 'DOWN') head.y += 10;
-        if(dir === 'LEFT') head.x -= 10; if(dir === 'RIGHT') head.x += 10;
-
-        if(head.x<0 || head.x>=200 || head.y<0 || head.y>=200 || snake.some(s=>s.x===head.x && s.y===head.y)) {
-            alert('Game Over! Final Score: ' + score); startSnakeGame(); return;
-        }
-        snake.unshift(head);
-        if(head.x === food.x && head.y === food.y) { score += 10; document.getElementById('snake-score').innerText = "Score: " + score; spawnFood(); } else { snake.pop(); }
-
-        sCtx.clearRect(0,0,200,200);
-        sCtx.fillStyle = '#ff0000'; sCtx.fillRect(food.x, food.y, 10, 10);
-        sCtx.fillStyle = '#00ff00'; snake.forEach(s => sCtx.fillRect(s.x, s.y, 9, 9));
-    }
-
-    // --- TASK MANAGER CONTROLLERS ---
-    function updateTaskManagerUI() {
-        document.getElementById('proc-media-status').innerText = isMusicPlaying ? "Active (Playing)" : "Idle";
-        document.getElementById('proc-media-status').style.color = isMusicPlaying ? "green" : "#666";
-    }
-    function killProcesses() {
-        alert('Releasing allocation blocks... Cleaned 56MB of system cache nodes.');
-        if(isMusicPlaying) {
-            toggleMusicPlay(); // Shuts down active synthesizer loop
-        }
-        document.querySelectorAll('.process-row').forEach((r, i) => {
-            if(i > 0) r.innerHTML = `<span>${r.children[0].innerText}</span><span style="color:red;">Killed</span>`;
-        });
-    }
+/* default browser content + first contacts render */
+resetBrowser();
 </script>
-
 </body>
 </html>
