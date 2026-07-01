@@ -3,81 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot Interface</title>
+    <title>Custom MP3 Player</title>
     <style>
+        /* --- CSS Styling --- */
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #121212; /* Dark background like Spotify */
+            color: white;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-        }
-        #chat-container {
-            background: #ffffff;
-            border: 2px solid #ccc;
-            border-radius: 8px;
+            min-height: 100vh;
+            margin: 0;
             padding: 20px;
-            width: 80%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-sizing: border-box;
         }
-        .message {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .input-container {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .input-container input {
+        player-container {
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            outline: none;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid #333;
         }
-        .send-button {
-            background: #007bff;
-            color: white;
+        h1 {
+            margin-top: 0;
+            color: #1DB954; /* Spotify Green accent */
+            font-size: 1.8em;
+        }
+        #audioPlayer {
+            width: 100%;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 15px;
             border: none;
-            border-radius: 4px;
-            padding: 10px 20px;
+            border-radius: 5px;
             cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s, transform 0.1s;
+            flex-grow: 1;
         }
-        .send-button:hover {
-            background: #0056b3;
+        #importButton {
+            background-color: #1DB954;
+            color: white;
+            font-weight: bold;
+        }
+        #importButton:hover {
+            background-color: #00A844;
+            transform: scale(1.05);
+        }
+
+        #message {
+            margin-top: 15px;
+            padding: 8px;
+            background-color: #3a3a3a;
+            border-radius: 4px;
+            color: #FFD700; /* Gold/Yellow for info */
+            min-height: 20px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <div id="chat-container">
-        <div class="message">You: Hello!</div>
-        <div class="message">Bot: Hello, I'm here to help!</div>
-        <div class="message">Bot: How can I assist you today?</div>
-        <div class="message">You: I'm looking for information.</div>
-        <div class="message">Bot: Sure! What specific information are you looking for?</div>
-        <div class="message">You: I'm interested in technology.</div>
-        <div class="message">Bot: Great! Here's some information about technology trends...</div>
-    </div>
-    <div class="input-container">
-        <input type="text" id="input-text" placeholder="Type a message...">
-        <button class="send-button" onclick="sendMessage()">Send</button>
+
+    <div class="player-container">
+        <h1>🎵 My Custom Player</h1>
+        
+        <!-- The core HTML Audio Element -->
+        <audio id="audioPlayer" controls></audio>
+
+        <!-- Button to trigger the hidden file input -->
+        <button id="importButton">📂 Import MP3 File</button>
+        
+        <div id="message">Select an MP3 file to begin playing!</div>
     </div>
 
     <script>
-        function sendMessage() {
-            const input = document.getElementById('input-text').value;
-            document.getElementById('chat-container').innerHTML += `
-                <div class="message">You: ${input}</div>
-                <div class="message">Bot: Processing your message...</div>
-                <div class="message">Bot: Thank you for your message! I'll respond shortly.</div>
-            `;
-            document.getElementById('input-text').value = '';
+        const audioPlayer = document.getElementById('audioPlayer');
+        const importButton = document.getElementById('importButton');
+        const messageDisplay = document.getElementById('message');
+        const fileInput = document.getElementById('audioFileSelector');
+
+        // --- 1. Event Listener to trigger the hidden file input ---
+        importButton.addEventListener('click', () => {
+            fileInput.click(); // Triggers the actual file selection dialog
+        });
+
+        // --- 2. Event Listener for when a file is selected ---
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+
+            if (file) {
+                // Check if the file is actually an audio type (basic check)
+                if (file.type.startsWith('audio/')) {
+                    playAudio(file);
+                } else {
+                    showMessage('Error: Please select a valid audio file (MP3).', true);
+                }
+            } else {
+                showMessage('No file selected.', true);
+            }
+        });
+
+        // --- 3. Core Function to load and play the audio ---
+        function playAudio(file) {
+            // Create a temporary URL for the file to be played by the audio element
+            const fileURL = URL.createObjectURL(file);
+            
+            audioPlayer.src = fileURL;
+            
+            // UI feedback
+            showMessage(`Now playing: ${file.name}`);
+            
+            // Attempt to play the audio automatically
+            audioPlayer.play().then(() => {
+                console.log("Playback started.");
+            }).catch(error => {
+                console.error("Playback failed:", error);
+                showMessage("Playback error. Try refreshing.", true);
+            });
+
         }
+
+        // --- 4. Helper function to update the status message ---
+        function showMessage(msg, isError = false) {
+            messageDisplay.textContent = msg;
+            if (isError) {
+                messageDisplay.style.backgroundColor = '#552222';
+            } else {
+                messageDisplay.style.backgroundColor = '#3a3a3a';
+            }
+        }
+
     </script>
 </body>
 </html>
