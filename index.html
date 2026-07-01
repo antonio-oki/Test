@@ -6,7 +6,20 @@
 <title>MyTube</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, collection, addDoc, query, where, orderBy, limit, getDocs, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
+
+  // Expose what the rest of the (non-module) app script needs, via window.
+  window.__fb = {
+    initializeApp, getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+    getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, collection, addDoc, query, where, orderBy, limit, getDocs, increment, serverTimestamp,
+    getStorage, ref, uploadBytes, getDownloadURL, deleteObject
+  };
+  window.dispatchEvent(new Event('fb-sdk-ready'));
+</script>
 <style>
 :root{--bg:#0f0f0f;--bg2:#181818;--bg3:#272727;--bg4:#3a3a3a;--fg:#f1f1f1;--fg2:#aaa;--fg3:#717171;--accent:#e63946;--accent-h:#ff4d5a;--border:#303030;--radius:12px;--radius-sm:8px;--shadow:0 4px 24px rgba(0,0,0,.5)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -298,7 +311,7 @@ textarea{resize:vertical}
 
 <div class="config-banner" id="configBanner">
   <i class="fas fa-triangle-exclamation"></i>
-  Supabase isn't configured yet. Edit <code>SUPABASE_URL</code> / <code>SUPABASE_ANON</code> at the top of the script and run <code>supabase_setup.sql</code> in your project.
+  Firebase isn't configured yet. Edit the <code>firebaseConfig</code> object at the top of the script with your project's values.
 </div>
 
 <nav id="sidebar" aria-label="Main navigation">
@@ -432,14 +445,20 @@ textarea{resize:vertical}
 
 <script>
 /* ============================================================
-   CONFIG — paste your own Supabase project values here.
-   Get these from: Supabase Dashboard > Project Settings > API
-   Then run supabase_setup.sql in the SQL Editor before using this app.
+   CONFIG — paste your own Firebase project values here.
+   Get these from: Firebase Console > Project settings > General
+   > Your apps > SDK setup and configuration.
    ============================================================ */
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';      // e.g. https://xxxxxxxx.supabase.co
-const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY'; // the "anon public" key
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
 
-const IS_CONFIGURED = SUPABASE_URL.startsWith('https://') && SUPABASE_ANON.length > 20;
+const IS_CONFIGURED = firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY" && firebaseConfig.projectId && firebaseConfig.projectId !== "YOUR_PROJECT_ID";
 
 /* ===== STATE ===== */
 let state = {
@@ -454,23 +473,42 @@ let state = {
   clipsMuted: true,
   commentsVideoId: null,
   serverOnline: false,
-  videosCache: [],           // last fetched video list (with resolved public URLs)
   likesSet: new Set(),       // video ids the current user has liked
   subsSet: new Set(),        // channel_names the current user subscribes to
-  historyList: [],           // [{video_id, watched_at}]
+  historyList: [],           // [{videoId, watchedAt}]
   uploadFile: null,
   uploadThumbFile: null,
-  uploadThumbAuto: null,     // data URL if auto-generated
+  uploadThumbAuto: null,
   uploadDuration: '0:00'
 };
 
 const CATEGORIES = ['All','Music','Gaming','Education','Science','Technology','Entertainment','Sports','News','Cooking','Travel','Comedy','General'];
-const MAX_UPLOAD_MB = 200; // soft client-side cap; actual limit depends on your Supabase plan
+const MAX_UPLOAD_MB = 200; // soft client-side cap; actual limit depends on your Firebase/Storage plan and rules
 
-/* ===== SUPABASE CLIENT ===== */
-let sb = null;
-if (IS_CONFIGURED && window.supabase) {
-  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+/* ===== FIREBASE CLIENT (set up once the SDK module has loaded) ===== */
+let fbApp = null, auth = null, db = null, storage = null, fb = null;
+
+function initFirebase() {
+  if (!IS_CONFIGURED || !window.__fb) { updateServerStatus(false); return; }
+  fb = window.__fb;
+  try {
+    fbApp = fb.initializeApp(firebaseConfig);
+    auth = fb.getAuth(fbApp);
+    db = fb.getFirestore(fbApp);
+    storage = fb.getStorage(fbApp);
+    updateServerStatus(true);
+    fb.onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await loadCurrentUser(user);
+        await loadUserExtras();
+      } else {
+        state.currentUser = null; state.likesSet = new Set(); state.subsSet = new Set(); state.historyList = [];
+      }
+      render();
+    });
+  } catch (e) {
+    console.error(e); updateServerStatus(false);
+  }
 }
 
 function updateServerStatus(online) {
@@ -482,86 +520,80 @@ function updateServerStatus(online) {
   document.getElementById('configBanner').classList.toggle('show', !IS_CONFIGURED);
 }
 
-async function initServer() {
-  if (!sb) { updateServerStatus(false); return; }
-  try {
-    const { error } = await sb.from('videos').select('id').limit(1);
-    updateServerStatus(!error);
-  } catch (e) { updateServerStatus(false); }
-}
-
 /* ===== AUTH ===== */
-async function sbSignUp(email, password) {
-  const { data, error } = await sb.auth.signUp({ email, password });
-  if (error) return { error };
-  if (data.user) {
+async function fbSignUp(email, password) {
+  try {
+    const cred = await fb.createUserWithEmailAndPassword(auth, email, password);
     const displayName = email.split('@')[0];
-    await sb.from('profiles').upsert({ id: data.user.id, display_name: displayName });
-  }
-  return { data };
+    await fb.setDoc(fb.doc(db, 'profiles', cred.user.uid), { displayName, avatarUrl: null, createdAt: fb.serverTimestamp() });
+    return { user: cred.user };
+  } catch (e) { return { error: e }; }
 }
 
-async function sbSignIn(email, password) {
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) return { error };
-  const { data: profile } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
-  return { data: { user: data.user, profile } };
+async function fbSignIn(email, password) {
+  try {
+    const cred = await fb.signInWithEmailAndPassword(auth, email, password);
+    return { user: cred.user };
+  } catch (e) { return { error: e }; }
 }
 
-async function sbSignOut() { if (sb) { try { await sb.auth.signOut(); } catch (e) {} } }
+async function fbSignOut() { if (auth) { try { await fb.signOut(auth); } catch (e) {} } }
 
 async function loadCurrentUser(authUser) {
-  const { data: profile } = await sb.from('profiles').select('*').eq('id', authUser.id).single();
+  const snap = await fb.getDoc(fb.doc(db, 'profiles', authUser.uid));
+  const profile = snap.exists() ? snap.data() : null;
   state.currentUser = {
-    id: authUser.id,
+    id: authUser.uid,
     email: authUser.email,
-    displayName: profile ? profile.display_name : authUser.email.split('@')[0],
-    avatarUrl: profile ? profile.avatar_url : null
+    displayName: profile ? profile.displayName : authUser.email.split('@')[0],
+    avatarUrl: profile ? profile.avatarUrl : null
   };
 }
 
 async function loadUserExtras() {
   if (!state.currentUser) { state.likesSet = new Set(); state.subsSet = new Set(); state.historyList = []; return; }
   const uid = state.currentUser.id;
-  const [{ data: likes }, { data: subs }, { data: hist }] = await Promise.all([
-    sb.from('likes').select('video_id').eq('user_id', uid),
-    sb.from('subscriptions').select('channel_name').eq('subscriber_id', uid),
-    sb.from('watch_history').select('video_id, watched_at').eq('user_id', uid).order('watched_at', { ascending: false }).limit(100)
+  const [likesSnap, subsSnap, histSnap] = await Promise.all([
+    fb.getDocs(fb.query(fb.collection(db, 'likes'), fb.where('userId', '==', uid))),
+    fb.getDocs(fb.query(fb.collection(db, 'subscriptions'), fb.where('subscriberId', '==', uid))),
+    fb.getDocs(fb.query(fb.collection(db, 'watchHistory'), fb.where('userId', '==', uid), fb.orderBy('watchedAt', 'desc'), fb.limit(100)))
   ]);
-  state.likesSet = new Set((likes || []).map(l => l.video_id));
-  state.subsSet = new Set((subs || []).map(s => s.channel_name));
-  state.historyList = hist || [];
+  state.likesSet = new Set(likesSnap.docs.map(d => d.data().videoId));
+  state.subsSet = new Set(subsSnap.docs.map(d => d.data().channelName));
+  state.historyList = histSnap.docs.map(d => ({ videoId: d.data().videoId, watchedAt: d.data().watchedAt }));
 }
 
 /* ===== STORAGE HELPERS ===== */
-function publicUrl(bucket, path) {
-  if (!path) return null;
-  const { data } = sb.storage.from(bucket).getPublicUrl(path);
-  return data ? data.publicUrl : null;
-}
-
-async function uploadToBucket(bucket, file, onProgress) {
+async function uploadToStorage(folder, file, onProgress) {
   const uid = state.currentUser.id;
   const ext = (file.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const path = `${uid}/${genId()}.${ext}`;
-  // supabase-js v2 doesn't expose granular progress; fake a smooth indicator.
+  const path = `${folder}/${uid}/${genId()}.${ext}`;
+  const storageRef = fb.ref(storage, path);
   if (onProgress) onProgress(15);
-  const { error } = await sb.storage.from(bucket).upload(path, file, { cacheControl: '3600', upsert: false });
-  if (error) throw error;
+  await fb.uploadBytes(storageRef, file);
+  if (onProgress) onProgress(90);
+  const url = await fb.getDownloadURL(storageRef);
   if (onProgress) onProgress(100);
-  return path;
+  return { path, url };
 }
 
-async function removeFromBucket(bucket, path) {
+async function removeFromStorage(path) {
   if (!path) return;
-  try { await sb.storage.from(bucket).remove([path]); } catch (e) {}
+  try { await fb.deleteObject(fb.ref(storage, path)); } catch (e) {}
 }
 
 /* ===== HELPERS ===== */
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-function timeAgo(iso) {
-  const ts = typeof iso === 'number' ? iso : new Date(iso).getTime();
-  const d = Date.now() - ts, m = Math.floor(d / 60000);
+function toMillis(ts) {
+  if (!ts) return Date.now();
+  if (typeof ts === 'number') return ts;
+  if (ts.toMillis) return ts.toMillis();
+  if (ts.seconds) return ts.seconds * 1000;
+  return Date.now();
+}
+function timeAgo(ts) {
+  const t = toMillis(ts);
+  const d = Date.now() - t, m = Math.floor(d / 60000);
   if (m < 1) return 'just now'; if (m < 60) return m + ' min ago';
   const h = Math.floor(m / 60); if (h < 24) return h + 'h ago';
   const dy = Math.floor(h / 24); if (dy < 30) return dy + 'd ago';
@@ -619,6 +651,20 @@ function closeModal(id) { document.getElementById(id).classList.remove('show'); 
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 function showFormError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 4000); }
 
+function friendlyAuthError(e) {
+  const code = e && e.code ? e.code : '';
+  const map = {
+    'auth/email-already-in-use': 'An account with this email already exists',
+    'auth/invalid-email': 'Enter a valid email',
+    'auth/weak-password': 'Password must be at least 6 characters',
+    'auth/user-not-found': 'No account found with this email',
+    'auth/wrong-password': 'Incorrect password',
+    'auth/invalid-credential': 'Incorrect email or password',
+    'auth/too-many-requests': 'Too many attempts. Try again later.'
+  };
+  return map[code] || (e && e.message) || 'Something went wrong';
+}
+
 let confirmCallback = null;
 function showConfirm(title, message, onConfirm) {
   document.getElementById('confirmTitle').textContent = title;
@@ -628,24 +674,38 @@ function showConfirm(title, message, onConfirm) {
 document.getElementById('confirmAction').addEventListener('click', () => { closeModal('confirmModal'); if (confirmCallback) { confirmCallback(); confirmCallback = null; } });
 
 /* ===== DATA LOADING ===== */
-function decorateVideo(v) {
+function decorateVideo(id, v) {
   return {
-    id: v.id, owner: v.owner, channelName: v.channel_name, title: v.title, description: v.description || '',
-    category: v.category || 'General', visibility: v.visibility, isClip: v.is_clip, duration: v.duration || '0:00',
-    views: v.views || 0, likes: v.likes || 0, uploadedAt: v.created_at,
-    videoUrl: publicUrl('videos', v.video_path),
-    thumbnail: v.thumb_path ? publicUrl('thumbnails', v.thumb_path) : null,
-    videoPath: v.video_path, thumbPath: v.thumb_path
+    id, owner: v.owner, channelName: v.channelName, title: v.title, description: v.description || '',
+    category: v.category || 'General', visibility: v.visibility, isClip: v.isClip, duration: v.duration || '0:00',
+    views: v.views || 0, likes: v.likes || 0, uploadedAt: v.createdAt,
+    videoUrl: v.videoUrl || null, thumbnail: v.thumbUrl || null,
+    videoPath: v.videoPath, thumbPath: v.thumbPath
   };
 }
 
 async function fetchVideos({ mineOnly = false } = {}) {
-  if (!sb) return [];
-  let q = sb.from('videos').select('*').order('created_at', { ascending: false });
-  if (mineOnly && state.currentUser) q = q.eq('owner', state.currentUser.id);
-  const { data, error } = await q;
-  if (error) { showToast('Failed to load videos'); return []; }
-  return (data || []).map(decorateVideo);
+  if (!db) return [];
+  try {
+    let q;
+    if (mineOnly && state.currentUser) {
+      q = fb.query(fb.collection(db, 'videos'), fb.where('owner', '==', state.currentUser.id));
+    } else {
+      q = fb.query(fb.collection(db, 'videos'), fb.orderBy('createdAt', 'desc'), fb.limit(200));
+    }
+    const snap = await fb.getDocs(q);
+    let videos = snap.docs.map(d => decorateVideo(d.id, d.data()));
+    if (mineOnly) videos.sort((a, b) => toMillis(b.uploadedAt) - toMillis(a.uploadedAt));
+    return videos;
+  } catch (e) {
+    console.error(e); showToast('Failed to load videos'); return [];
+  }
+}
+
+async function fetchVideoById(id) {
+  const snap = await fb.getDoc(fb.doc(db, 'videos', id));
+  if (!snap.exists()) return null;
+  return decorateVideo(snap.id, snap.data());
 }
 
 /* ===== RENDER ===== */
@@ -721,7 +781,7 @@ async function renderMain() {
 }
 
 async function renderVideoGrid(main) {
-  if (!sb) { renderNoServer(main); return; }
+  if (!db) { renderNoServer(main); return; }
   let videos;
   if (state.currentView === 'profile' && state.currentUser) videos = await fetchVideos({ mineOnly: true });
   else videos = await fetchVideos();
@@ -731,7 +791,7 @@ async function renderVideoGrid(main) {
 
   if (state.currentView === 'trending') videos.sort((a, b) => b.views - a.views);
   else if (state.currentView === 'history') {
-    const order = {}; state.historyList.forEach((h, i) => order[h.video_id] = i);
+    const order = {}; state.historyList.forEach((h, i) => order[h.videoId] = i);
     videos = videos.filter(v => order[v.id] !== undefined).sort((a, b) => order[a.id] - order[b.id]);
   } else if (state.currentView === 'liked') {
     videos = videos.filter(v => state.likesSet.has(v.id));
@@ -770,11 +830,16 @@ async function renderVideoGrid(main) {
   main.querySelectorAll('.video-card').forEach(card => card.onclick = (e) => { if (!e.target.closest('.delete-btn')) openVideo(card.dataset.id); });
   main.querySelectorAll('.delete-btn').forEach(b => b.onclick = (e) => { e.stopPropagation(); deleteVideo(b.dataset.id); });
   const clearBtn = document.getElementById('clearHistoryBtn');
-  if (clearBtn) clearBtn.onclick = () => { showConfirm('Clear Watch History', 'This will remove all videos from your watch history.', async () => { await sb.from('watch_history').delete().eq('user_id', state.currentUser.id); state.historyList = []; showToast('Watch history cleared'); render(); }); };
+  if (clearBtn) clearBtn.onclick = () => {
+    showConfirm('Clear Watch History', 'This will remove all videos from your watch history.', async () => {
+      await Promise.all(state.historyList.map(h => fb.deleteDoc(fb.doc(db, 'watchHistory', state.currentUser.id + '_' + h.videoId)).catch(() => {})));
+      state.historyList = []; showToast('Watch history cleared'); render();
+    });
+  };
 }
 
 function renderNoServer(main) {
-  main.innerHTML = `<div class="empty-state"><i class="fas fa-plug-circle-xmark"></i><h2>Not connected to Supabase</h2><p>Edit <code>SUPABASE_URL</code> and <code>SUPABASE_ANON</code> at the top of the script, and run <code>supabase_setup.sql</code> in your Supabase project's SQL editor.</p></div>`;
+  main.innerHTML = `<div class="empty-state"><i class="fas fa-plug-circle-xmark"></i><h2>Not connected to Firebase</h2><p>Edit the <code>firebaseConfig</code> object at the top of the script with your Firebase project's values, and make sure Firestore, Storage, and Email/Password auth are enabled in the Firebase console.</p></div>`;
 }
 
 function renderVideoCard(v) {
@@ -797,14 +862,13 @@ function renderVideoCard(v) {
 }
 
 async function renderPlayer(main) {
-  const { data: row, error } = await sb.from('videos').select('*').eq('id', state.selectedVideoId).single();
-  if (error || !row) { state.currentView = 'home'; render(); return; }
-  const v = decorateVideo(row);
+  const v = await fetchVideoById(state.selectedVideoId);
+  if (!v) { state.currentView = 'home'; render(); return; }
 
   // increment views (fire and forget)
-  sb.rpc('increment_views', { v_id: v.id }).then(() => {});
+  fb.updateDoc(fb.doc(db, 'videos', v.id), { views: fb.increment(1) }).catch(() => {});
   if (state.currentUser) {
-    sb.from('watch_history').upsert({ user_id: state.currentUser.id, video_id: v.id, watched_at: new Date().toISOString() }).then(() => {});
+    fb.setDoc(fb.doc(db, 'watchHistory', state.currentUser.id + '_' + v.id), { userId: state.currentUser.id, videoId: v.id, watchedAt: fb.serverTimestamp() }).catch(() => {});
   }
 
   const isLiked = state.likesSet.has(v.id);
@@ -838,15 +902,21 @@ async function renderPlayer(main) {
   </div>`;
 
   document.getElementById('likeBtn').onclick = () => toggleLike(v.id);
-  const db = document.getElementById('deletePlayerBtn'); if (db) db.onclick = () => { deleteVideo(v.id); goHome(); };
-  const sbBtn = document.getElementById('subBtn'); if (sbBtn) sbBtn.onclick = () => toggleSubscribe(v.channelName);
+  const dbtn = document.getElementById('deletePlayerBtn'); if (dbtn) dbtn.onclick = () => { deleteVideo(v.id); goHome(); };
+  const subBtnEl = document.getElementById('subBtn'); if (subBtnEl) subBtnEl.onclick = () => toggleSubscribe(v.channelName);
   document.getElementById('shareBtn').onclick = () => { navigator.clipboard?.writeText(location.href.split('#')[0] + '#video-' + v.id).catch(() => {}); showToast('Link copied'); };
   document.getElementById('commentBtn').onclick = () => openComments(v.id);
   main.querySelectorAll('.sidebar-video').forEach(sv => sv.onclick = () => openVideo(sv.dataset.id));
 }
 
-async function fetchCommentsCount(vid) { const { count } = await sb.from('comments').select('id', { count: 'exact', head: true }).eq('video_id', vid); return count || 0; }
-async function fetchSubCount(channelName) { const { count } = await sb.from('subscriptions').select('subscriber_id', { count: 'exact', head: true }).eq('channel_name', channelName); return count || 0; }
+async function fetchCommentsCount(vid) {
+  const snap = await fb.getDocs(fb.query(fb.collection(db, 'comments'), fb.where('videoId', '==', vid)));
+  return snap.size;
+}
+async function fetchSubCount(channelName) {
+  const snap = await fb.getDocs(fb.query(fb.collection(db, 'subscriptions'), fb.where('channelName', '==', channelName)));
+  return snap.size;
+}
 
 async function renderProfile(main) {
   const u = state.currentUser; if (!u) { state.currentView = 'home'; render(); return; }
@@ -885,9 +955,8 @@ async function renderProfile(main) {
     const file = avatarInput.files[0]; if (!file) return;
     if (file.size > 2 * 1024 * 1024) { showToast('Image must be under 2MB'); return; }
     try {
-      const path = await uploadToBucket('avatars', file);
-      const url = publicUrl('avatars', path);
-      await sb.from('profiles').update({ avatar_url: url }).eq('id', state.currentUser.id);
+      const { url } = await uploadToStorage('avatars', file);
+      await fb.updateDoc(fb.doc(db, 'profiles', state.currentUser.id), { avatarUrl: url });
       state.currentUser.avatarUrl = url;
       showToast('Profile picture updated'); render();
     } catch (e) { showToast('Failed to update avatar: ' + (e.message || e)); }
@@ -908,7 +977,7 @@ function renderClipCard(v) {
 
 async function renderClipsFeed() {
   const feed = document.getElementById('clipsFeed');
-  if (!sb) { feed.innerHTML = `<div class="clips-empty"><i class="fas fa-plug-circle-xmark"></i><h2 style="font-size:20px">Not connected</h2></div>`; return; }
+  if (!db) { feed.innerHTML = `<div class="clips-empty"><i class="fas fa-plug-circle-xmark"></i><h2 style="font-size:20px">Not connected</h2></div>`; return; }
   const all = await fetchVideos();
   const clips = all.filter(v => v.isClip && v.visibility === 'public');
   if (clips.length === 0) { feed.innerHTML = `<div class="clips-empty"><i class="fas fa-bolt"></i><h2 style="font-size:22px;margin-bottom:8px">No clips yet</h2><p style="color:var(--fg3);font-size:15px">Be the first to upload a short clip</p></div>`; return; }
@@ -967,13 +1036,14 @@ function openClipViewer(id) {
 async function toggleLike(vid) {
   if (!state.currentUser) { showToast('Sign in to like'); return; }
   const uid = state.currentUser.id;
+  const likeDocId = uid + '_' + vid;
   if (state.likesSet.has(vid)) {
-    await sb.from('likes').delete().eq('user_id', uid).eq('video_id', vid);
-    await sb.rpc('increment_likes', { v_id: vid, delta: -1 });
+    await fb.deleteDoc(fb.doc(db, 'likes', likeDocId));
+    await fb.updateDoc(fb.doc(db, 'videos', vid), { likes: fb.increment(-1) });
     state.likesSet.delete(vid);
   } else {
-    await sb.from('likes').insert({ user_id: uid, video_id: vid });
-    await sb.rpc('increment_likes', { v_id: vid, delta: 1 });
+    await fb.setDoc(fb.doc(db, 'likes', likeDocId), { userId: uid, videoId: vid, createdAt: fb.serverTimestamp() });
+    await fb.updateDoc(fb.doc(db, 'videos', vid), { likes: fb.increment(1) });
     state.likesSet.add(vid);
   }
   if (state.currentView === 'player') render();
@@ -983,31 +1053,33 @@ async function toggleSubscribe(channelName) {
   if (!state.currentUser) { showToast('Sign in to subscribe'); return; }
   if (channelName === state.currentUser.displayName) return;
   const uid = state.currentUser.id;
+  const subDocId = uid + '_' + channelName;
   if (state.subsSet.has(channelName)) {
-    await sb.from('subscriptions').delete().eq('subscriber_id', uid).eq('channel_name', channelName);
+    await fb.deleteDoc(fb.doc(db, 'subscriptions', subDocId));
     state.subsSet.delete(channelName); showToast('Unsubscribed from ' + channelName);
   } else {
-    await sb.from('subscriptions').insert({ subscriber_id: uid, channel_name: channelName });
+    await fb.setDoc(fb.doc(db, 'subscriptions', subDocId), { subscriberId: uid, channelName, createdAt: fb.serverTimestamp() });
     state.subsSet.add(channelName); showToast('Subscribed to ' + channelName);
   }
 }
 
 function deleteVideo(id) {
   showConfirm('Delete Video', 'Are you sure? This cannot be undone.', async () => {
-    const { data: row } = await sb.from('videos').select('*').eq('id', id).single();
-    if (row) { await removeFromBucket('videos', row.video_path); if (row.thumb_path) await removeFromBucket('thumbnails', row.thumb_path); }
-    await sb.from('videos').delete().eq('id', id);
+    const v = await fetchVideoById(id);
+    if (v) { await removeFromStorage(v.videoPath); if (v.thumbPath) await removeFromStorage(v.thumbPath); }
+    await fb.deleteDoc(fb.doc(db, 'videos', id));
     showToast('Video deleted'); render();
   });
 }
 
 async function openComments(vid) {
   state.commentsVideoId = vid;
-  const { data: comments } = await sb.from('comments').select('*').eq('video_id', vid).order('created_at', { ascending: false });
-  document.getElementById('commentsTitle').textContent = 'Comments (' + (comments ? comments.length : 0) + ')';
+  const snap = await fb.getDocs(fb.query(fb.collection(db, 'comments'), fb.where('videoId', '==', vid), fb.orderBy('createdAt', 'desc')));
+  const comments = snap.docs.map(d => d.data());
+  document.getElementById('commentsTitle').textContent = 'Comments (' + comments.length + ')';
   const list = document.getElementById('commentsList');
-  list.innerHTML = (!comments || comments.length === 0) ? '<div class="comments-empty">No comments yet. Be the first!</div>' :
-    comments.map(c => `<div class="comment-row"><img src="${genAvatar(c.user_name)}" alt="${escHtml(c.user_name)}"><div><span class="comment-user">${escHtml(c.user_name)}</span><span class="comment-time">${timeAgo(c.created_at)}</span><div class="comment-text">${escHtml(c.text)}</div></div></div>`).join('');
+  list.innerHTML = comments.length === 0 ? '<div class="comments-empty">No comments yet. Be the first!</div>' :
+    comments.map(c => `<div class="comment-row"><img src="${genAvatar(c.userName)}" alt="${escHtml(c.userName)}"><div><span class="comment-user">${escHtml(c.userName)}</span><span class="comment-time">${timeAgo(c.createdAt)}</span><div class="comment-text">${escHtml(c.text)}</div></div></div>`).join('');
   openModal('commentsOverlay');
   setTimeout(() => document.getElementById('commentsSheet').classList.add('show'), 10);
 }
@@ -1017,14 +1089,14 @@ document.getElementById('commentSendBtn').onclick = async () => {
   if (!state.currentUser) { showToast('Sign in to comment'); return; }
   const input = document.getElementById('commentInput'), text = input.value.trim();
   if (!text) return;
-  await sb.from('comments').insert({ video_id: state.commentsVideoId, user_id: state.currentUser.id, user_name: state.currentUser.displayName, text });
+  await fb.addDoc(fb.collection(db, 'comments'), { videoId: state.commentsVideoId, userId: state.currentUser.id, userName: state.currentUser.displayName, text, createdAt: fb.serverTimestamp() });
   input.value = ''; openComments(state.commentsVideoId);
 };
 document.getElementById('commentInput').onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('commentSendBtn').click(); };
 
 /* ===== AUTH FORM HANDLERS ===== */
 async function doLogin() {
-  if (!sb) { showFormError('loginError', 'Supabase is not configured yet.'); return; }
+  if (!auth) { showFormError('loginError', 'Firebase is not configured yet.'); return; }
   const email = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPass').value;
   if (!email) { showFormError('loginError', 'Email is required'); return; }
@@ -1032,16 +1104,16 @@ async function doLogin() {
   if (!pass) { showFormError('loginError', 'Password is required'); return; }
 
   const btn = document.getElementById('loginBtn'); btn.disabled = true; btn.textContent = 'Signing in...';
-  const result = await sbSignIn(email, pass);
+  const result = await fbSignIn(email, pass);
   btn.disabled = false; btn.textContent = 'Sign In';
-  if (result.error) { showFormError('loginError', result.error.message); return; }
-  await loadCurrentUser(result.data.user);
+  if (result.error) { showFormError('loginError', friendlyAuthError(result.error)); return; }
+  await loadCurrentUser(result.user);
   await loadUserExtras();
   closeModal('authModal'); showToast('Welcome back!'); render();
 }
 
 async function doRegister() {
-  if (!sb) { showFormError('regError', 'Supabase is not configured yet.'); return; }
+  if (!auth) { showFormError('regError', 'Firebase is not configured yet.'); return; }
   const email = document.getElementById('regEmail').value.trim();
   const pass = document.getElementById('regPass').value;
   const confirm = document.getElementById('regPassConfirm').value;
@@ -1052,24 +1124,17 @@ async function doRegister() {
   if (pass !== confirm) { showFormError('regError', 'Passwords do not match'); return; }
 
   const btn = document.getElementById('registerBtn'); btn.disabled = true; btn.textContent = 'Creating account...';
-  const result = await sbSignUp(email, pass);
+  const result = await fbSignUp(email, pass);
   btn.disabled = false; btn.textContent = 'Create Account';
-  if (result.error) { showFormError('regError', result.error.message); return; }
+  if (result.error) { showFormError('regError', friendlyAuthError(result.error)); return; }
 
-  if (result.data.user && !result.data.session) {
-    // Email confirmation is required by the Supabase project settings.
-    document.getElementById('regNote').textContent = 'Check your email to confirm your account, then sign in.';
-    document.getElementById('showLogin').click();
-    showToast('Account created — confirm your email to sign in');
-    return;
-  }
-  await loadCurrentUser(result.data.user);
+  await loadCurrentUser(result.user);
   await loadUserExtras();
   closeModal('authModal'); showToast('Account created! Welcome.'); render();
 }
 
 async function logout() {
-  await sbSignOut();
+  await fbSignOut();
   state.currentUser = null; state.likesSet = new Set(); state.subsSet = new Set(); state.historyList = [];
   state.currentView = 'home'; state.userDropdownOpen = false;
   showToast('Signed out'); render();
@@ -1145,23 +1210,23 @@ async function doUpload() {
 
   try {
     label.textContent = 'Uploading video...'; bar.style.width = '10%';
-    const videoPath = await uploadToBucket('videos', state.uploadFile, (p) => { bar.style.width = Math.min(60, p) + '%'; });
+    const { path: videoPath, url: videoUrl } = await uploadToStorage('videos', state.uploadFile, (p) => { bar.style.width = Math.min(60, p) + '%'; });
 
-    let thumbPath = null;
+    let thumbPath = null, thumbUrl = null;
     label.textContent = 'Uploading thumbnail...'; bar.style.width = '70%';
     const thumbFile = state.uploadThumbFile || state.uploadThumbAuto;
-    if (thumbFile) thumbPath = await uploadToBucket('thumbnails', thumbFile, () => {});
+    if (thumbFile) { const r = await uploadToStorage('thumbnails', thumbFile, () => {}); thumbPath = r.path; thumbUrl = r.url; }
     bar.style.width = '90%';
 
     label.textContent = 'Saving...';
-    const { error } = await sb.from('videos').insert({
+    await fb.addDoc(fb.collection(db, 'videos'), {
       owner: state.currentUser.id,
-      channel_name: state.currentUser.displayName,
+      channelName: state.currentUser.displayName,
       title, description: desc || 'No description.', category: cat, visibility: vis,
-      is_clip: state.uploadType === 'clip', duration: state.uploadDuration,
-      video_path: videoPath, thumb_path: thumbPath, views: 0, likes: 0
+      isClip: state.uploadType === 'clip', duration: state.uploadDuration,
+      videoPath, videoUrl, thumbPath, thumbUrl,
+      views: 0, likes: 0, createdAt: fb.serverTimestamp()
     });
-    if (error) throw error;
 
     bar.style.width = '100%';
     closeModal('uploadModal'); showToast((state.uploadType === 'clip' ? 'Clip' : 'Video') + ' uploaded successfully!');
@@ -1199,26 +1264,9 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.q
 
 /* ===== INIT ===== */
 bindVideoZone(); bindThumbZone();
+render(); // initial paint (shows "not connected" banner/state if needed)
 
-async function restoreSession() {
-  if (!sb) { render(); return; }
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      await loadCurrentUser(session.user);
-      await loadUserExtras();
-    }
-  } catch (e) {}
-  render();
-}
-
-if (sb) {
-  sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_OUT') { state.currentUser = null; state.likesSet = new Set(); state.subsSet = new Set(); state.historyList = []; render(); }
-  });
-}
-
-initServer().then(restoreSession);
+if (window.__fb) { initFirebase(); } else { window.addEventListener('fb-sdk-ready', initFirebase, { once: true }); }
 </script>
 </body>
 </html>
