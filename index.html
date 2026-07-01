@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom MP3 Player</title>
-    <style>
-        /* --- CSS Styling --- */
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Custom MP3 Player</title>
+   <style>
         body {
             font-family: 'Arial', sans-serif;
             background-color: #121212; /* Dark background like Spotify */
@@ -31,12 +30,10 @@
         h1 {
             margin-top: 0;
             color: #1DB954; /* Spotify Green accent */
-            font-size: 1.8em;
         }
         #audioPlayer {
             width: 100%;
             margin: 20px 0;
-            border-radius: 5px;
         }
         controls {
             display: flex;
@@ -51,7 +48,6 @@
             cursor: pointer;
             font-size: 1em;
             transition: background-color 0.2s, transform 0.1s;
-            flex-grow: 1;
         }
         #importButton {
             background-color: #1DB954;
@@ -60,91 +56,103 @@
         }
         #importButton:hover {
             background-color: #00A844;
-            transform: scale(1.05);
         }
 
-        #message {
+        div#message {
             margin-top: 15px;
             padding: 8px;
             background-color: #3a3a3a;
             border-radius: 4px;
             color: #FFD700; /* Gold/Yellow for info */
             min-height: 20px;
-            text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <div class="player-container">
-        <h1>🎵 My Custom Player</h1>
+   <div class="player-container">
+       <h1>🎵 My Custom Player</h1>
         
-        <!-- The core HTML Audio Element -->
-        <audio id="audioPlayer" controls></audio>
+        <!-- 1. Audio Element -->
+       <audio id="audioPlayer" controls></audio>
 
-        <!-- Button to trigger the hidden file input -->
-        <button id="importButton">📂 Import MP3 File</button>
-        
-        <div id="message">Select an MP3 file to begin playing!</div>
+        <!-- 2. Hidden File Input Selector -->
+        <!-- Changed id from empty to "audioFileSelector" so JS can find it -->
+       <input type="file" id="audioFileSelector" style="display: none;">
+
+        <!-- 3. Action Button -->
+       <button id="importButton">📂 Import MP3 File</button>
+
+        <!-- Status Message -->
+       <div id="message">Select an MP3 file to begin playing!</div>
     </div>
 
-    <script>
+   <script>
+        // --- 1. Select Elements ---
         const audioPlayer = document.getElementById('audioPlayer');
         const importButton = document.getElementById('importButton');
         const messageDisplay = document.getElementById('message');
+        // This fix selects the input element that now exists in HTML with ID 'audioFileSelector'
         const fileInput = document.getElementById('audioFileSelector');
 
-        // --- 1. Event Listener to trigger the hidden file input ---
+        function showMessage(msg, isError = false) {
+            messageDisplay.textContent = msg;
+            if (isError) {
+                messageDisplay.style.borderColor = "red";
+                messageDisplay.style.color = "#ff6b6b";
+            } else {
+                messageDisplay.style.borderColor = "transparent";
+                messageDisplay.style.color = "#FFD700";
+            }
+        }
+
+        // --- 2. Event Listener for the button ---
         importButton.addEventListener('click', () => {
-            fileInput.click(); // Triggers the actual file selection dialog
+            // Clicks the hidden input to open file picker
+            fileInput.click(); 
         });
 
-        // --- 2. Event Listener for when a file is selected ---
+        // --- 3. Event Listener for File Upload --
         fileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
 
             if (file) {
-                // Check if the file is actually an audio type (basic check)
+                // Check if it's an audio file type
                 if (file.type.startsWith('audio/')) {
                     playAudio(file);
+                } else if (file.name.toLowerCase().endsWith('.mp3')) {
+                    playAudio(file);
                 } else {
-                    showMessage('Error: Please select a valid audio file (MP3).', true);
+                    // Fallback to name check if strict type check fails
+                    showMessage('Error: Please select a valid MP3 file.', true);
                 }
             } else {
-                showMessage('No file selected.', true);
+                showMessage('No audio file selected.', true);
             }
         });
 
-        // --- 3. Core Function to load and play the audio ---
+        // --- 4. Core Function --
         function playAudio(file) {
-            // Create a temporary URL for the file to be played by the audio element
             const fileURL = URL.createObjectURL(file);
             
+            // Update audio element source
             audioPlayer.src = fileURL;
             
-            // UI feedback
+            // UI Feedback
             showMessage(`Now playing: ${file.name}`);
             
-            // Attempt to play the audio automatically
-            audioPlayer.play().then(() => {
-                console.log("Playback started.");
-            }).catch(error => {
-                console.error("Playback failed:", error);
+            try {
+                audioPlayer.play().then(() => {
+                    console.log("Playback started.");
+                }).catch(error => {
+                    console.error("Autoplay prevented or error:", error);
+                    showMessage("Playback Error. Try refreshing.", true);
+                });
+            } catch (e) {
                 showMessage("Playback error. Try refreshing.", true);
-            });
-
-        }
-
-        // --- 4. Helper function to update the status message ---
-        function showMessage(msg, isError = false) {
-            messageDisplay.textContent = msg;
-            if (isError) {
-                messageDisplay.style.backgroundColor = '#552222';
-            } else {
-                messageDisplay.style.backgroundColor = '#3a3a3a';
             }
-        }
 
+        }
     </script>
 </body>
 </html>
