@@ -3,44 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Website</title>
+    <title>Chatbot Interface</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
         }
-        header {
-            background: #333;
+        #chat-container {
+            background: #ffffff;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            width: 80%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-container input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+        }
+        .send-button {
+            background: #007bff;
             color: white;
-            padding: 10px 0;
-            text-align: center;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            cursor: pointer;
         }
-        nav {
-            background: #444;
-            overflow: hidden;
-        }
-        nav a {
-            float: left;
-            display: block;
-            color: white;
-            text-align: center;
-            padding: 14px 16px;
-            text-decoration: none;
-        }
-        nav a:hover {
-            background: #555;
+        .send-button:hover {
+            background: #0056b3;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Welcome to My Website</h1>
-    </header>
-    <nav>
-        <a href="#">Home</a>
-        <a href="#">About</a>
-        <a href="#">Contact</a>
-    </nav>
+    <div id="chat-container">
+        <div class="message">You: Hello!</div>
+        <div class="message">Bot: Hello, I'm here to help!</div>
+        <div class="message">Bot: How can I assist you today?</div>
+        <div class="message">You: I'm looking for information.</div>
+        <div class="message">Bot: Sure! What specific information are you looking for?</div>
+        <div class="message">You: I'm interested in technology.</div>
+        <div class="message">Bot: Great! Here's some information about technology trends...</div>
+    </div>
+    <div class="input-container">
+        <input type="text" id="input-text" placeholder="Type a message...">
+        <button class="send-button" onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const input = document.getElementById('input-text').value;
+            document.getElementById('chat-container').innerHTML += `
+                <div class="message">You: ${input}</div>
+                <div class="message">Bot: Processing your message...</div>
+                <div class="message">Bot: Thank you for your message! I'll respond shortly.</div>
+            `;
+            document.getElementById('input-text').value = '';
+        }
+    </script>
 </body>
 </html>
