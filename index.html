@@ -81,6 +81,8 @@ textarea{resize:vertical}
 .btn-primary:hover{background:var(--accent-h);transform:translateY(-1px)}
 .btn-secondary{padding:10px 24px;background:var(--bg3);color:var(--fg);border-radius:20px;font-size:14px;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border)}
 .btn-secondary:hover{background:var(--bg4)}
+.btn-danger{padding:10px 24px;background:transparent;color:var(--accent);border-radius:20px;font-size:14px;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--accent)}
+.btn-danger:hover{background:var(--accent);color:#fff}
 
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.show{display:flex;animation:fadeIn .2s}
@@ -217,7 +219,6 @@ textarea{resize:vertical}
 <main id="main"></main>
 <button class="upload-fab" id="uploadFab" aria-label="Upload video"><i class="fas fa-plus"></i></button>
 
-<!-- AUTH MODAL -->
 <div class="modal-overlay" id="authModal">
   <div class="modal">
     <div class="modal-header">
@@ -244,7 +245,6 @@ textarea{resize:vertical}
   </div>
 </div>
 
-<!-- UPLOAD MODAL -->
 <div class="modal-overlay" id="uploadModal">
   <div class="modal" style="max-width:580px">
     <div class="modal-header">
@@ -292,6 +292,22 @@ textarea{resize:vertical}
   </div>
 </div>
 
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h2 id="confirmTitle">Confirm</h2>
+      <button class="modal-close" onclick="closeModal('confirmModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmMessage" style="color:var(--fg2);font-size:15px;margin-bottom:20px;line-height:1.6"></p>
+      <div style="display:flex;gap:12px;justify-content:flex-end">
+        <button class="btn-secondary" onclick="closeModal('confirmModal')" style="padding:8px 20px;font-size:13px">Cancel</button>
+        <button class="btn-danger" id="confirmAction" style="padding:8px 20px;font-size:13px">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast-container"></div>
 
 <script>
@@ -312,13 +328,13 @@ let state = {
 };
 
 const CATEGORIES = ['All','Music','Gaming','Education','Science','Technology','Entertainment','Sports','News','Cooking','Travel','Comedy','General'];
-const MAX_STORAGE_MB = 40; /* localStorage limit is ~5MB per origin, warn around 4MB used */
+const MAX_STORAGE_MB = 40;
 
-/* ===== STORAGE HELPERS ===== */
+/* ===== STORAGE ===== */
 function getStoreSize() {
-  let total = 0;
-  for (let k in localStorage) { if (localStorage.hasOwnProperty(k)) total += localStorage[k].length * 2; }
-  return total;
+  let t = 0;
+  for (let k in localStorage) { if (localStorage.hasOwnProperty(k)) t += localStorage[k].length * 2; }
+  return t;
 }
 function formatBytes(b) {
   if (b < 1024) return b + ' B';
@@ -335,6 +351,25 @@ function saveHistory(h) { localStorage.setItem('mt_history', JSON.stringify(h));
 function getLikes() { return JSON.parse(localStorage.getItem('mt_likes') || '[]'); }
 function saveLikes(l) { localStorage.setItem('mt_likes', JSON.stringify(l)); }
 function getSubs() { return state.currentUser ? JSON.parse(localStorage.getItem('mt_subs_' + state.currentUser.username) || '[]') : []; }
+
+/* ===== CLEAN OLD SEED DATA ===== */
+/* Remove any leftover videos from the previous version that had no videoData */
+(function cleanOldVids() {
+  let vids = getVideos();
+  const cleaned = vids.filter(v => v.videoData);
+  if (cleaned.length !== vids.length) {
+    saveVideos(cleaned);
+    /* Also clean up any seed users that have no videos and aren't the current session */
+    const usedChannels = new Set(cleaned.map(v => v.channel));
+    const sessionUser = localStorage.getItem('mt_session');
+    const users = getUsers();
+    const seedUsers = ['TechVault','MusicWaves','GameForge','SciExplore','CookMaster'];
+    seedUsers.forEach(su => {
+      if (su !== sessionUser && !usedChannels.has(su)) { delete users[su]; }
+    });
+    saveUsers(users);
+  }
+})();
 
 /* ===== HELPERS ===== */
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -365,35 +400,22 @@ function genThumbFromVideo(videoDataUrl, title) {
     const video = document.createElement('video');
     video.muted = true; video.preload = 'metadata';
     video.src = videoDataUrl;
-    video.onloadeddata = () => {
-      /* Seek to 25% for a good thumbnail frame */
-      video.currentTime = Math.max(0.1, video.duration * 0.25);
-    };
+    video.onloadeddata = () => { video.currentTime = Math.max(0.1, video.duration * 0.25); };
     video.onseeked = () => {
       const c = document.createElement('canvas'); c.width = 640; c.height = 360;
       const ctx = c.getContext('2d');
       ctx.drawImage(video, 0, 0, 640, 360);
-      /* Overlay title if provided */
-      if (title) {
-        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0, 300, 640, 60);
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Outfit,sans-serif'; ctx.textAlign = 'center';
-        let t = title.length > 45 ? title.slice(0,42) + '...' : title;
-        ctx.fillText(t, 320, 335);
-      }
       resolve(c.toDataURL('image/jpeg', 0.8));
       URL.revokeObjectURL(video.src);
     };
     video.onerror = () => {
-      /* Fallback: colored rectangle */
       const c = document.createElement('canvas'); c.width = 640; c.height = 360;
       const ctx = c.getContext('2d');
       const g = ctx.createLinearGradient(0,0,640,360);
       g.addColorStop(0, '#e63946'); g.addColorStop(1, '#000');
       ctx.fillStyle = g; ctx.fillRect(0,0,640,360);
-      ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.beginPath();
-      ctx.moveTo(280,120); ctx.lineTo(380,180); ctx.lineTo(280,240); ctx.closePath(); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.font = 'bold 24px Outfit,sans-serif'; ctx.textAlign = 'center';
-      let t = (title || 'Video').length > 35 ? title.slice(0,32) + '...' : (title || 'Video');
+      let t = (title || 'Video').length > 35 ? (title||'Video').slice(0,32) + '...' : (title || 'Video');
       ctx.fillText(t, 320, 200);
       resolve(c.toDataURL('image/jpeg', 0.8));
       URL.revokeObjectURL(video.src);
@@ -416,6 +438,19 @@ function closeModal(id) { document.getElementById(id).classList.remove('show'); 
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 function showFormError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 4000); }
 
+/* Custom confirm modal instead of native confirm() */
+let confirmCallback = null;
+function showConfirm(title, message, onConfirm) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = message;
+  confirmCallback = onConfirm;
+  openModal('confirmModal');
+}
+document.getElementById('confirmAction').addEventListener('click', () => {
+  closeModal('confirmModal');
+  if (confirmCallback) { confirmCallback(); confirmCallback = null; }
+});
+
 /* ===== RENDER ===== */
 function render() { renderHeader(); renderSidebar(); renderMain(); renderFab(); }
 
@@ -436,10 +471,15 @@ function renderHeader() {
         <div class="dropdown-item danger" data-action="logout"><i class="fas fa-sign-out-alt"></i>Sign Out</div>
       </div>
     </div>`;
-    document.getElementById('avatarBtn').onclick = (e) => { e.stopPropagation(); state.userDropdownOpen = !state.userDropdownOpen; document.getElementById('userDropdown').classList.toggle('show', state.userDropdownOpen); };
+    document.getElementById('avatarBtn').onclick = (e) => {
+      e.stopPropagation();
+      state.userDropdownOpen = !state.userDropdownOpen;
+      document.getElementById('userDropdown').classList.toggle('show', state.userDropdownOpen);
+    };
     ab.querySelectorAll('.dropdown-item').forEach(item => {
       item.onclick = () => {
-        state.userDropdownOpen = false; document.getElementById('userDropdown').classList.remove('show');
+        state.userDropdownOpen = false;
+        document.getElementById('userDropdown').classList.remove('show');
         const a = item.dataset.action;
         if (a === 'logout') logout();
         else if (a === 'upload') openUploadModal();
@@ -475,7 +515,13 @@ function renderSidebar() {
       || '<div style="padding:8px 12px;font-size:13px;color:var(--fg3)">No subscriptions yet</div>' : '');
 
   document.querySelectorAll('#sidebar .sidebar-item[data-view]').forEach(el => {
-    el.onclick = () => { state.currentView = el.dataset.view; state.activeCategory = 'All'; state.searchQuery = ''; render(); if (window.innerWidth<=768) document.getElementById('sidebar').classList.remove('mobile-open'); };
+    el.onclick = () => {
+      state.currentView = el.dataset.view;
+      state.activeCategory = 'All';
+      state.searchQuery = '';
+      render();
+      if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('mobile-open');
+    };
   });
   document.getElementById('sidebar').classList.toggle('collapsed', !state.sidebarOpen);
   document.getElementById('main').classList.toggle('expanded', !state.sidebarOpen);
@@ -510,11 +556,12 @@ function renderVideoGrid(main) {
   if (['home','trending','profile'].includes(state.currentView)) {
     html += `<div class="chips">${CATEGORIES.map(c => `<button class="chip ${state.activeCategory===c?'active':''}" data-cat="${c}">${c}</button>`).join('')}</div>`;
   }
+
   const titles = { home:'', trending:'Trending', history:'Watch History', liked:'Liked Videos', profile:'Your Videos' };
   if (titles[state.currentView]) {
     html += `<div class="section-header"><h2 class="section-title">${titles[state.currentView]}</h2>`;
     if (state.currentView === 'history' && getHistory().length > 0) {
-      html += `<button class="btn-secondary" id="clearHistoryBtn" style="padding:8px 16px;font-size:13px"><i class="fas fa-trash-alt"></i> Clear History</button>`;
+      html += `<button class="btn-danger" id="clearHistoryBtn" style="padding:6px 14px;font-size:12px"><i class="fas fa-trash-alt"></i> Clear History</button>`;
     }
     html += `</div>`;
   }
@@ -526,19 +573,30 @@ function renderVideoGrid(main) {
       history: { icon:'fa-history', h:'No watch history', p:'Videos you watch will show up here.' },
       liked: { icon:'fa-thumbs-up', h:'No liked videos', p:'Videos you like will show up here.' },
       profile: { icon:'fa-film', h:'No videos yet', p:'Upload your first video to get started.', btn: {label:'Upload Video',icon:'fa-upload',action:'openUploadModal()'} },
-      search: { icon:'fa-search', h:'No results found', p:'Try different keywords or remove the search filter.', btn: {label:'Clear Search',icon:'fa-times',action:'clearSearch()'} },
     };
-    const e = state.searchQuery.trim() ? emptyMap.search : (emptyMap[state.currentView] || emptyMap.home);
+    const e = state.searchQuery.trim() ? { icon:'fa-search', h:'No results found', p:'Try different keywords or remove the search filter.', btn: {label:'Clear Search',icon:'fa-times',action:'clearSearch()'} } : (emptyMap[state.currentView] || emptyMap.home);
     html += `<div class="empty-state"><i class="fas ${e.icon}"></i><h2>${e.h}</h2><p>${e.p}</p>${e.btn ? `<button class="btn-primary" onclick="${e.btn.action}"><i class="fas ${e.btn.icon}"></i> ${e.btn.label}</button>` : ''}</div>`;
   } else {
     html += `<div class="video-grid">${videos.map(v => renderVideoCard(v)).join('')}</div>`;
   }
+
   main.innerHTML = html;
+
+  /* Bind all events after innerHTML */
   main.querySelectorAll('.chip').forEach(c => c.onclick = () => { state.activeCategory = c.dataset.cat; render(); });
   main.querySelectorAll('.video-card').forEach(card => card.onclick = (e) => { if (!e.target.closest('.delete-btn')) openVideo(card.dataset.id); });
   main.querySelectorAll('.delete-btn').forEach(b => b.onclick = (e) => { e.stopPropagation(); deleteVideo(b.dataset.id); });
-  const clearHistBtn = main.querySelector('#clearHistoryBtn');
-  if (clearHistBtn) clearHistBtn.onclick = () => clearWatchHistory();
+
+  const clearBtn = document.getElementById('clearHistoryBtn');
+  if (clearBtn) {
+    clearBtn.onclick = () => {
+      showConfirm('Clear Watch History', 'This will remove all videos from your watch history. This action cannot be undone.', () => {
+        saveHistory([]);
+        showToast('Watch history cleared');
+        render();
+      });
+    };
+  }
 }
 
 function renderVideoCard(v) {
@@ -621,15 +679,18 @@ function renderPlayer(main) {
   </div>`;
 
   document.getElementById('likeBtn').onclick = () => toggleLike(v.id);
-  const db = document.getElementById('deletePlayerBtn'); if (db) db.onclick = () => { deleteVideo(v.id); goHome(); };
-  const sb = document.getElementById('subBtn'); if (sb) sb.onclick = () => toggleSubscribe(v.channel);
+  const db = document.getElementById('deletePlayerBtn');
+  if (db) db.onclick = () => { deleteVideo(v.id); goHome(); };
+  const sb = document.getElementById('subBtn');
+  if (sb) sb.onclick = () => toggleSubscribe(v.channel);
   const shareBtn = document.getElementById('shareBtn');
-  if (shareBtn) shareBtn.onclick = () => { showToast('Link copied to clipboard (simulated)'); };
+  if (shareBtn) shareBtn.onclick = () => showToast('Link copied to clipboard (simulated)');
   main.querySelectorAll('.sidebar-video').forEach(sv => sv.onclick = () => openVideo(sv.dataset.id));
 }
 
 function renderProfile(main) {
-  const u = state.currentUser; if (!u) { state.currentView = 'home'; render(); return; }
+  const u = state.currentUser;
+  if (!u) { state.currentView = 'home'; render(); return; }
   const users = getUsers(), ud = users[u.username] || u;
   const myVids = getVideos().filter(v => v.channel === u.username);
   const tv = myVids.reduce((s,v) => s + v.views, 0);
@@ -648,6 +709,7 @@ function renderProfile(main) {
       ? `<div class="empty-state"><i class="fas fa-video"></i><h2>No videos yet</h2><p>Upload your first video to get started</p><button class="btn-primary" onclick="openUploadModal()"><i class="fas fa-upload"></i> Upload Video</button></div>`
       : `<h2 class="section-title">Your Videos</h2><div class="video-grid">${myVids.map(v => renderVideoCard(v)).join('')}</div>`
     }</div>`;
+
   main.querySelectorAll('.video-card').forEach(c => c.onclick = (e) => { if (!e.target.closest('.delete-btn')) openVideo(c.dataset.id); });
   main.querySelectorAll('.delete-btn').forEach(b => b.onclick = (e) => { e.stopPropagation(); deleteVideo(b.dataset.id); });
 }
@@ -658,13 +720,6 @@ function renderFab() { document.getElementById('uploadFab').classList.toggle('sh
 function openVideo(id) { state.selectedVideoId = id; state.currentView = 'player'; render(); window.scrollTo(0,0); }
 function goHome() { state.currentView = 'home'; state.selectedVideoId = null; render(); }
 function clearSearch() { state.searchQuery = ''; render(); }
-
-function clearWatchHistory() {
-  if (!confirm('Clear your entire watch history? This cannot be undone.')) return;
-  saveHistory([]);
-  showToast('Watch history cleared');
-  render();
-}
 
 function toggleLike(vid) {
   if (!state.currentUser) { showToast('Sign in to like videos'); return; }
@@ -681,18 +736,28 @@ function toggleSubscribe(channel) {
   const key = 'mt_subs_' + state.currentUser.username;
   let subs = JSON.parse(localStorage.getItem(key) || '[]');
   const users = getUsers(), idx = subs.indexOf(channel);
-  if (idx >= 0) { subs.splice(idx, 1); if (users[channel]) { users[channel].subs = Math.max(0,(users[channel].subs||0)-1); saveUsers(users); } showToast('Unsubscribed from ' + channel); }
-  else { subs.push(channel); if (users[channel]) { users[channel].subs = (users[channel].subs||0)+1; saveUsers(users); } showToast('Subscribed to ' + channel); }
+  if (idx >= 0) {
+    subs.splice(idx, 1);
+    if (users[channel]) { users[channel].subs = Math.max(0,(users[channel].subs||0)-1); saveUsers(users); }
+    showToast('Unsubscribed from ' + channel);
+  } else {
+    subs.push(channel);
+    if (users[channel]) { users[channel].subs = (users[channel].subs||0)+1; saveUsers(users); }
+    showToast('Subscribed to ' + channel);
+  }
   localStorage.setItem(key, JSON.stringify(subs)); render();
 }
 
 function getSubCount(ch) { const u = getUsers()[ch]; return formatViews(u ? (u.subs||0) : 0); }
 
 function deleteVideo(id) {
-  saveVideos(getVideos().filter(v => v.id !== id));
-  saveLikes(getLikes().filter(l => l !== id));
-  saveHistory(getHistory().filter(h => h.videoId !== id));
-  showToast('Video deleted'); render();
+  showConfirm('Delete Video', 'Are you sure you want to delete this video? This action cannot be undone.', () => {
+    saveVideos(getVideos().filter(v => v.id !== id));
+    saveLikes(getLikes().filter(l => l !== id));
+    saveHistory(getHistory().filter(h => h.videoId !== id));
+    showToast('Video deleted');
+    render();
+  });
 }
 
 /* ===== AUTH ===== */
@@ -716,7 +781,11 @@ function register(uname, pass, confirm) {
   state.currentUser = nu; localStorage.setItem('mt_session', uname.trim());
   closeModal('authModal'); showToast('Account created! Welcome, ' + uname.trim()); render();
 }
-function logout() { state.currentUser = null; localStorage.removeItem('mt_session'); state.currentView = 'home'; state.userDropdownOpen = false; showToast('Signed out'); render(); }
+function logout() {
+  state.currentUser = null; localStorage.removeItem('mt_session');
+  state.currentView = 'home'; state.userDropdownOpen = false;
+  showToast('Signed out'); render();
+}
 
 /* ===== UPLOAD ===== */
 function openUploadModal() {
@@ -727,8 +796,6 @@ function openUploadModal() {
   document.getElementById('uploadCat').value = 'General';
   document.getElementById('uploadVis').value = 'public';
   document.getElementById('uploadError').classList.remove('show');
-  document.getElementById('videoInput').value = '';
-  document.getElementById('thumbInput').value = '';
   resetVideoZone(); resetThumbZone(); updateStorageBar();
   openModal('uploadModal');
 }
@@ -776,9 +843,9 @@ function bindVideoZone() {
       bindVideoZone();
       /* Get duration */
       const vid = document.createElement('video'); vid.preload = 'metadata'; vid.src = e.target.result;
-      vid.onloadedmetadata = () => { state.videoDuration = formatDuration(vid.duration); URL.revokeObjectURL(vid.src); };
-      vid.onerror = () => { state.videoDuration = '0:00'; URL.revokeObjectURL(vid.src); };
-      /* Auto-generate thumbnail if no custom one */
+      vid.onloadedmetadata = () => { state.videoDuration = formatDuration(vid.duration); };
+      vid.onerror = () => { state.videoDuration = '0:00'; };
+      /* Auto-generate thumbnail */
       if (!state.uploadedThumbData) {
         genThumbFromVideo(e.target.result, '').then(thumb => {
           document.getElementById('thumbPreviewBox').innerHTML = `<img src="${thumb}">`;
@@ -821,19 +888,15 @@ async function doUpload() {
   if (!title) { showFormError('uploadError', 'Title is required'); return; }
   if (title.length < 3) { showFormError('uploadError', 'Title must be at least 3 characters'); return; }
 
-  /* Check storage */
   const currentSize = getStoreSize();
   const newSize = state.uploadedVideoData.length + (state.uploadedThumbData ? state.uploadedThumbData.length : 0);
   if (currentSize + newSize > MAX_STORAGE_MB * 1024 * 1024 * 0.95) {
-    showFormError('uploadError', `Not enough storage. Used: ${formatBytes(currentSize)}, this file: ${formatBytes(newSize)}. Try a smaller video or clear old ones.`);
+    showFormError('uploadError', 'Not enough storage. Used: ' + formatBytes(currentSize) + ', this file: ' + formatBytes(newSize) + '. Try a smaller video or delete old ones.');
     return;
   }
 
-  /* Generate final thumbnail if still none */
   let thumb = state.uploadedThumbData;
-  if (!thumb) {
-    thumb = await genThumbFromVideo(state.uploadedVideoData, title);
-  }
+  if (!thumb) { thumb = await genThumbFromVideo(state.uploadedVideoData, title); }
 
   const video = {
     id: genId(), title, description: desc || 'No description provided.',
@@ -848,7 +911,7 @@ async function doUpload() {
   state.currentView = 'profile'; render();
 }
 
-/* ===== EVENT BINDINGS ===== */
+/* ===== GLOBAL EVENT BINDINGS ===== */
 document.getElementById('menuToggle').onclick = () => {
   if (window.innerWidth <= 768) document.getElementById('sidebar').classList.toggle('mobile-open');
   else { state.sidebarOpen = !state.sidebarOpen; render(); }
@@ -867,7 +930,9 @@ document.getElementById('showLogin').onclick = (e) => { e.preventDefault(); docu
 
 document.getElementById('uploadSubmitBtn').onclick = doUpload;
 
-document.addEventListener('click', () => { if (state.userDropdownOpen) { state.userDropdownOpen = false; const d = document.getElementById('userDropdown'); if (d) d.classList.remove('show'); } });
+document.addEventListener('click', () => {
+  if (state.userDropdownOpen) { state.userDropdownOpen = false; const d = document.getElementById('userDropdown'); if (d) d.classList.remove('show'); }
+});
 document.querySelectorAll('.modal-overlay').forEach(o => o.onclick = (e) => { if (e.target === o) o.classList.remove('show'); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show')); });
 
