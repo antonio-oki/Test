@@ -162,6 +162,8 @@ textarea{resize:vertical}
 @keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateY(-10px)}}
 
 .section-title{font-size:20px;font-weight:700;margin-bottom:16px}
+.section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.section-header .section-title{margin-bottom:0}
 .back-btn{display:inline-flex;align-items:center;gap:8px;color:var(--fg2);font-size:14px;font-weight:500;margin-bottom:16px;transition:color .2s}
 .back-btn:hover{color:var(--fg)}
 .delete-btn{color:var(--accent);opacity:0;transition:opacity .2s}
@@ -509,7 +511,13 @@ function renderVideoGrid(main) {
     html += `<div class="chips">${CATEGORIES.map(c => `<button class="chip ${state.activeCategory===c?'active':''}" data-cat="${c}">${c}</button>`).join('')}</div>`;
   }
   const titles = { home:'', trending:'Trending', history:'Watch History', liked:'Liked Videos', profile:'Your Videos' };
-  if (titles[state.currentView]) html += `<h2 class="section-title">${titles[state.currentView]}</h2>`;
+  if (titles[state.currentView]) {
+    html += `<div class="section-header"><h2 class="section-title">${titles[state.currentView]}</h2>`;
+    if (state.currentView === 'history' && getHistory().length > 0) {
+      html += `<button class="btn-secondary" id="clearHistoryBtn" style="padding:8px 16px;font-size:13px"><i class="fas fa-trash-alt"></i> Clear History</button>`;
+    }
+    html += `</div>`;
+  }
 
   if (videos.length === 0) {
     const emptyMap = {
@@ -529,6 +537,8 @@ function renderVideoGrid(main) {
   main.querySelectorAll('.chip').forEach(c => c.onclick = () => { state.activeCategory = c.dataset.cat; render(); });
   main.querySelectorAll('.video-card').forEach(card => card.onclick = (e) => { if (!e.target.closest('.delete-btn')) openVideo(card.dataset.id); });
   main.querySelectorAll('.delete-btn').forEach(b => b.onclick = (e) => { e.stopPropagation(); deleteVideo(b.dataset.id); });
+  const clearHistBtn = main.querySelector('#clearHistoryBtn');
+  if (clearHistBtn) clearHistBtn.onclick = () => clearWatchHistory();
 }
 
 function renderVideoCard(v) {
@@ -648,6 +658,13 @@ function renderFab() { document.getElementById('uploadFab').classList.toggle('sh
 function openVideo(id) { state.selectedVideoId = id; state.currentView = 'player'; render(); window.scrollTo(0,0); }
 function goHome() { state.currentView = 'home'; state.selectedVideoId = null; render(); }
 function clearSearch() { state.searchQuery = ''; render(); }
+
+function clearWatchHistory() {
+  if (!confirm('Clear your entire watch history? This cannot be undone.')) return;
+  saveHistory([]);
+  showToast('Watch history cleared');
+  render();
+}
 
 function toggleLike(vid) {
   if (!state.currentUser) { showToast('Sign in to like videos'); return; }
