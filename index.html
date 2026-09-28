@@ -1,141 +1,306 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
 
-<title>Gen AI 1</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+  >
 
-<link rel="stylesheet" href="style.css">
+  <meta
+    name="theme-color"
+    content="#07111f"
+  >
+
+  <title>Open City Drive</title>
+
+  <link
+    rel="stylesheet"
+    href="./styles/main.css"
+  >
+
+  <!--
+    This must appear before any JavaScript module.
+    Do not add a second import map elsewhere in this file.
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
 </head>
 
 <body>
+  <div id="game"></div>
 
-<div class="app">
+  <header id="topbar">
+    <div class="brand glass">
+      ▶ <span>OPEN CITY</span>
+    </div>
 
-<!-- Sidebar -->
-<aside class="sidebar">
+    <div class="metric glass">
+      <span>CASH</span>
+      <strong id="cash">$500</strong>
+    </div>
 
-<h2>Gen AI 1</h2>
+    <div class="metric glass">
+      <span>SCORE</span>
+      <strong id="score">0</strong>
+    </div>
 
-<button id="newChat">
-＋ New Chat
-</button>
+    <div class="metric glass">
+      <span>CAR</span>
+      <strong id="carHealth">100%</strong>
+    </div>
 
-<div class="history">
-<h4>History</h4>
-<div id="historyList"></div>
-</div>
+    <nav class="tools" aria-label="Game tools">
+      <button
+        id="mapButton"
+        class="glass"
+        type="button"
+        title="Map"
+      >
+        MAP
+      </button>
 
-<div class="sidebar-bottom">
-<button id="settingsBtn">
-⚙ Settings
-</button>
-</div>
+      <button
+        id="inventoryButton"
+        class="glass"
+        type="button"
+        title="Inventory"
+      >
+        BAG
+      </button>
 
-</aside>
+      <button
+        id="cameraButton"
+        class="glass"
+        type="button"
+        title="Reset camera"
+      >
+        C
+      </button>
 
+      <button
+        id="exitButton"
+        class="glass"
+        type="button"
+        title="Enter or exit vehicle"
+      >
+        F
+      </button>
 
-<!-- Main Chat -->
+      <button
+        id="pauseButton"
+        class="glass"
+        type="button"
+        title="Pause"
+      >
+        Ⅱ
+      </button>
 
-<main class="main">
+      <button
+        id="resetButton"
+        class="glass"
+        type="button"
+        title="Restart game"
+      >
+        ↺
+      </button>
+    </nav>
+  </header>
 
-<header>
+  <aside
+    id="minimap"
+    class="glass"
+    aria-label="Minimap"
+  >
+    <canvas
+      id="miniMap"
+      width="260"
+      height="260"
+    ></canvas>
+  </aside>
 
-<button id="menuBtn">
-☰
-</button>
+  <div
+    id="wanted"
+    aria-label="Wanted level"
+  ></div>
 
-<div class="model">
-Gen AI 1 ▾
-</div>
+  <div id="worldStatus"></div>
 
-</header>
+  <section
+    id="speedBox"
+    class="glass"
+    aria-label="Vehicle speed"
+  >
+    <small>KM/H</small>
+    <div id="speed">0</div>
+    <small id="gear">N</small>
+  </section>
 
+  <div
+    id="toast"
+    role="status"
+    aria-live="polite"
+  ></div>
 
-<div id="messages">
+  <div id="touch">
+    <div class="cluster">
+      <button
+        class="pad"
+        data-control="left"
+        type="button"
+        aria-label="Move left"
+      >
+        ◀
+        <small>LEFT</small>
+      </button>
 
-<div class="welcome">
-<h1>What can I help with?</h1>
-</div>
+      <button
+        class="pad"
+        data-control="right"
+        type="button"
+        aria-label="Move right"
+      >
+        ▶
+        <small>RIGHT</small>
+      </button>
 
-</div>
+      <button
+        class="pad sprint"
+        data-control="sprint"
+        type="button"
+        aria-label="Sprint"
+      >
+        ⚡
+        <small>SPRINT</small>
+      </button>
+    </div>
 
+    <div class="cluster">
+      <button
+        class="pad brake"
+        data-control="brake"
+        type="button"
+        aria-label="Brake or reverse"
+      >
+        ▼
+        <small>BRAKE</small>
+      </button>
 
+      <button
+        class="pad gas"
+        data-control="gas"
+        type="button"
+        aria-label="Accelerate"
+      >
+        ▲
+        <small>GAS</small>
+      </button>
+    </div>
+  </div>
 
-<footer>
+  <main id="overlay">
+    <section class="panel">
+      <div class="eyebrow">
+        PROCEDURAL OPEN-WORLD CITY
+      </div>
 
-<div class="composer">
+      <h1 id="overlayTitle">
+        OPEN CITY
+      </h1>
 
-<textarea 
-id="input"
-placeholder="Message Gen AI 1..."
-></textarea>
+      <p id="overlayText">
+        Explore, shop, fish, and drive carefully. The city includes
+        parks, pets, a hospital, dealership, fast food, and a larger
+        road network.
+      </p>
 
+      <button
+        id="mainButton"
+        class="action"
+        type="button"
+      >
+        ENTER CITY
+      </button>
 
-<div class="actions">
+      <p>
+        WASD / arrows to drive or walk · F enter/exit car ·
+        E interact · I inventory · M map · P pause ·
+        drag to orbit camera
+      </p>
+    </section>
+  </main>
 
-<button id="attach">
-📎
-</button>
+  <section
+    id="dialog"
+    hidden
+    aria-label="Interaction dialog"
+  >
+    <div class="panel">
+      <div
+        class="eyebrow"
+        id="dialogEyebrow"
+      >
+        INTERACTION
+      </div>
 
-<button id="send">
-↑
-</button>
+      <h1 id="dialogTitle">
+        STORE
+      </h1>
 
-</div>
+      <p id="dialogText"></p>
 
-</div>
+      <div id="dialogItems"></div>
 
-<p>
-Gen AI 1 can make mistakes. Check important info.
-</p>
+      <button
+        id="dialogClose"
+        class="action secondary"
+        type="button"
+      >
+        CLOSE
+      </button>
+    </div>
+  </section>
 
-</footer>
+  <section
+    id="mapOverlay"
+    hidden
+    aria-label="Full city map"
+  >
+    <canvas
+      id="bigMap"
+      width="1000"
+      height="1000"
+    ></canvas>
 
+    <div id="mapHint">
+      MAP button or M to close
+    </div>
+  </section>
 
-</main>
+  <section
+    id="loading"
+    aria-live="polite"
+  >
+    <div class="panel">
+      <strong id="loadingTitle">
+        Building the city…
+      </strong>
 
+      <p id="loadingText">
+        Loading 3D game.
+      </p>
+    </div>
+  </section>
 
-</div>
-
-
-<!-- Settings Modal -->
-
-<div id="settings" class="modal">
-
-<div class="modal-box">
-
-<h2>Settings</h2>
-
-<label>
-Theme
-</label>
-
-<select id="theme">
-
-<option value="dark">
-Dark
-</option>
-
-<option value="light">
-Light
-</option>
-
-</select>
-
-
-<button id="closeSettings">
-Done
-</button>
-
-
-</div>
-
-</div>
-
-
-<script src="app.js"></script>
-
+  <script
+    type="module"
+    src="./src/main.js"
+  ></script>
 </body>
 </html>
