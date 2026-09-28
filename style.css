@@ -1,1 +1,630 @@
+before,
+*::after {
+  box-sizing: border-box;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
 
+:root {
+  color-scheme: dark;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #081322;
+  color: #fff;
+  font-family: inherit;
+  touch-action: none;
+}
+
+body {
+  position: fixed;
+  inset: 0;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  touch-action: none;
+}
+
+button:focus-visible {
+  outline: 2px solid #43ddff;
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+#game {
+  position: fixed;
+  inset: 0;
+}
+
+#game canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.glass {
+  border: 1px solid #ffffff28;
+  background: #07111fdd;
+  box-shadow: 0 8px 24px #0005;
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
+
+/* Top bar */
+
+#topbar {
+  position: fixed;
+  z-index: 20;
+  top: max(8px, env(safe-area-inset-top));
+  right: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.brand,
+.metric,
+.tools button {
+  border-radius: 12px;
+}
+
+.brand {
+  flex: 0 0 auto;
+  padding: 9px;
+  font-size: 11px;
+  font-weight: 1000;
+  white-space: nowrap;
+}
+
+.metric {
+  flex: 0 0 auto;
+  min-width: 55px;
+  padding: 5px 7px;
+  text-align: center;
+}
+
+.metric span {
+  display: block;
+  color: #afbdca;
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.metric strong {
+  display: block;
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tools {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+  margin-left: auto;
+  pointer-events: auto;
+}
+
+.tools button {
+  width: 36px;
+  height: 36px;
+  padding: 0 2px;
+  border: 1px solid #ffffff30;
+  background: #07111fe8;
+  font-size: 9px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.tools button:hover {
+  background: #17334ce8;
+}
+
+.tools button:active {
+  transform: scale(0.94);
+  background: #235474e8;
+}
+
+/* Minimap */
+
+#minimap {
+  position: fixed;
+  z-index: 5;
+  top: 57px;
+  right: 8px;
+  width: 112px;
+  height: 112px;
+  padding: 4px;
+  border-radius: 15px;
+  pointer-events: none;
+}
+
+#minimap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 11px;
+}
+
+/* Speed and status */
+
+#speedBox {
+  position: fixed;
+  z-index: 5;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  left: 50%;
+  width: 95px;
+  padding: 7px;
+  text-align: center;
+  border-radius: 15px;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+#speed {
+  font-size: 30px;
+  font-weight: 1000;
+  line-height: 1;
+}
+
+#speedBox small {
+  color: #b7c5d1;
+  font-size: 8px;
+  font-weight: 900;
+}
+
+#wanted {
+  position: fixed;
+  z-index: 5;
+  top: 60px;
+  left: 50%;
+  color: #ffd35a;
+  letter-spacing: 3px;
+  text-shadow: 0 2px 7px #000;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+#wanted .half,
+#wanted .halfStar {
+  color: transparent;
+  background: linear-gradient(
+    90deg,
+    #ffd35a 50%,
+    #ffffff35 50%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+#wanted .empty,
+#wanted .emptyStars {
+  color: #ffffff35;
+}
+
+#worldStatus {
+  position: fixed;
+  z-index: 5;
+  top: 83px;
+  left: 50%;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-shadow: 0 1px 6px #000;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+/* Toast */
+
+#toast {
+  position: fixed;
+  z-index: 40;
+  top: 43%;
+  left: 50%;
+  max-width: 90vw;
+  padding: 9px 15px;
+  border: 1px solid #ffffff20;
+  border-radius: 20px;
+  background: #07111ff0;
+  box-shadow: 0 8px 24px #0006;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -5px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Touch controls */
+
+#touch {
+  position: fixed;
+  z-index: 10;
+  right: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  left: 12px;
+  display: none;
+  align-items: flex-end;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.touch #touch {
+  display: flex;
+}
+
+.cluster {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.pad {
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  border: 1px solid #ffffff45;
+  border-radius: 20px;
+  background: #07111fd9;
+  box-shadow: 0 7px 18px #0004;
+  font-size: 25px;
+  font-weight: 1000;
+  line-height: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.pad small {
+  display: block;
+  margin-top: 5px;
+  color: #cfdae4;
+  font-size: 8px;
+}
+
+.pad.gas,
+.pad.brake {
+  width: 84px;
+  height: 84px;
+}
+
+.pad.gas {
+  background: #14643ad9;
+}
+
+.pad.brake {
+  background: #65192ad9;
+}
+
+.pad.sprint {
+  width: 72px;
+  height: 72px;
+  background: #75521bd9;
+}
+
+.pad.active {
+  background: #286889;
+  transform: scale(0.92);
+}
+
+/* Fullscreen overlays */
+
+#overlay,
+#dialog,
+#mapOverlay,
+#loading {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  background: #020810df;
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+#dialog {
+  z-index: 35;
+}
+
+/*
+  The map sits below the top bar so the MAP button remains clickable.
+  Menu and dialog overlays still appear above the top bar.
+*/
+#mapOverlay {
+  z-index: 19;
+  padding: 0;
+  background: #07111ff5;
+}
+
+#loading {
+  z-index: 100;
+  background: #07111f;
+  transition: opacity 0.25s ease;
+}
+
+.panel {
+  width: min(470px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 23px;
+  border: 1px solid #ffffff28;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #14283d, #07111f);
+  box-shadow: 0 18px 50px #0007;
+  text-align: center;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.panel h1 {
+  margin: 8px 0;
+  font-size: clamp(30px, 8vw, 46px);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.panel p {
+  color: #bac7d2;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.eyebrow {
+  color: #39d9ff;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+}
+
+.action {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 9px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #43ddff, #5affac);
+  color: #04121a;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.action:hover {
+  filter: brightness(1.08);
+}
+
+.action:active {
+  transform: scale(0.985);
+}
+
+.action.secondary {
+  border: 1px solid #ffffff25;
+  background: #ffffff12;
+  color: #fff;
+}
+
+#dialogItems {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+/* Big map */
+
+#mapOverlay canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#mapHint {
+  position: absolute;
+  bottom: max(
+    16px,
+    env(safe-area-inset-bottom)
+  );
+  left: 50%;
+  padding: 8px 13px;
+  border: 1px solid #ffffff20;
+  border-radius: 20px;
+  background: #07111fee;
+  box-shadow: 0 6px 20px #0005;
+  font-size: 10px;
+  font-weight: 900;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .brand span {
+    display: none;
+  }
+
+  .brand {
+    width: 32px;
+    padding: 9px 7px;
+    text-align: center;
+  }
+
+  .metric {
+    min-width: 45px;
+    padding: 4px;
+  }
+
+  .metric strong {
+    font-size: 12px;
+  }
+
+  .tools {
+    gap: 3px;
+  }
+
+  .tools button {
+    width: 32px;
+    height: 34px;
+    font-size: 8px;
+  }
+
+  #minimap {
+    width: 98px;
+    height: 98px;
+  }
+
+  .panel {
+    padding: 19px 16px;
+  }
+
+  #touch {
+    right: 8px;
+    left: 8px;
+  }
+
+  .cluster {
+    gap: 6px;
+  }
+
+  .pad {
+    width: 64px;
+    height: 68px;
+  }
+
+  .pad.gas,
+  .pad.brake {
+    width: 74px;
+    height: 78px;
+  }
+
+  .pad.sprint {
+    width: 64px;
+    height: 68px;
+  }
+}
+
+@media (max-width: 430px) {
+  #topbar {
+    gap: 3px;
+  }
+
+  .brand {
+    display: none;
+  }
+
+  .metric {
+    min-width: 41px;
+    padding: 4px 3px;
+  }
+
+  .metric span {
+    font-size: 7px;
+  }
+
+  .metric strong {
+    font-size: 11px;
+  }
+
+  .tools {
+    gap: 2px;
+  }
+
+  .tools button {
+    width: 29px;
+    height: 32px;
+    font-size: 7px;
+  }
+
+  #wanted {
+    font-size: 13px;
+  }
+
+  #worldStatus {
+    font-size: 8px;
+  }
+}
+
+@media (orientation: portrait) {
+  .touch #speedBox {
+    top: 54px;
+    bottom: auto;
+  }
+
+  .touch #worldStatus {
+    top: 110px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  #minimap {
+    width: 90px;
+    height: 90px;
+  }
+
+  #wanted {
+    top: 52px;
+  }
+
+  #worldStatus {
+    top: 75px;
+  }
+
+  #speedBox {
+    bottom: 10px;
+  }
+
+  .pad {
+    width: 62px;
+    height: 62px;
+  }
+
+  .pad.gas,
+  .pad.brake {
+    width: 70px;
+    height: 70px;
+  }
+
+  .pad.sprint {
+    width: 62px;
+    height: 62px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #toast,
+  #loading {
+    transition: none;
+  }
+}
